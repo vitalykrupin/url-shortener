@@ -26,17 +26,17 @@ type GetHandler struct {
 	config config.Config
 }
 
-func NewPostHandler(store *storage.DB, config config.Config) *PostHandler {
+func NewPostHandler(store *storage.DB, config *config.Config) *PostHandler {
 	h := new(PostHandler)
 	h.store = store
-	h.config = config
+	h.config = *config
 	return h
 }
 
-func NewGetHandler(store *storage.DB, config config.Config) *GetHandler {
+func NewGetHandler(store *storage.DB, config *config.Config) *GetHandler {
 	h := new(GetHandler)
 	h.store = store
-	h.config = config
+	h.config = *config
 	return h
 }
 

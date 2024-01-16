@@ -10,8 +10,9 @@ import (
 )
 
 func main() {
-	config := config.Config{}
-	config.ParseFlags()
+	config := &config.Config{}
+	config.InitConfig()
+
 	store := storage.NewStorage()
 	router := chi.NewRouter()
 
