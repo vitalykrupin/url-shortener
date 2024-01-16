@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
+	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 )
 
 const aliasSize int = 7
@@ -16,22 +17,26 @@ const aliasSize int = 7
 type PostHandler struct {
 	http.Handler
 	store *storage.DB
+	config config.Config
 }
 
 type GetHandler struct {
 	http.Handler
 	store *storage.DB
+	config config.Config
 }
 
-func NewPostHandler(store *storage.DB) *PostHandler {
+func NewPostHandler(store *storage.DB, config config.Config) *PostHandler {
 	h := new(PostHandler)
 	h.store = store
+	h.config = config
 	return h
 }
 
-func NewGetHandler(store *storage.DB) *GetHandler {
+func NewGetHandler(store *storage.DB, config config.Config) *GetHandler {
 	h := new(GetHandler)
 	h.store = store
+	h.config = config
 	return h
 }
 
@@ -58,13 +63,13 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "text/plain")
 	if alias, ok := handler.store.FullURLKeysMap[string(fullURL)]; ok {
-		fmt.Fprint(w, "http://"+req.Host+"/"+alias)
+		fmt.Fprint(w, handler.config.ResponseAddress+"/"+alias)
 		return
 	} else {
 		alias := handler.randomString(aliasSize)
 		handler.store.FullURLKeysMap[string(fullURL)] = alias
 		handler.store.AliasKeysMap[alias] = string(fullURL)
-		fmt.Fprint(w, "http://"+req.Host+"/"+handler.store.FullURLKeysMap[string(fullURL)])
+		fmt.Fprint(w, handler.config.ResponseAddress+"/"+alias)
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
@@ -38,6 +39,9 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	store := storage.NewStorage()
 	store.FullURLKeysMap["https://yandex.ru"] = "abcABC"
 	store.AliasKeysMap["abcABC"] = "https://yandex.ru"
+	conf := config.Config{}
+	conf.ServerAddress = "localhost:8080"
+	conf.ResponseAddress = "http://localhost:8080"
 
 	tests := []struct {
 		name string
@@ -59,7 +63,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewPostHandler(store)
+			handler := NewPostHandler(store,conf)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			res := tt.args.w.Result()
 			defer res.Body.Close()
@@ -87,6 +91,9 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	store := storage.NewStorage()
 	store.FullURLKeysMap["https://yandex.ru"] = "abcABC"
 	store.AliasKeysMap["abcABC"] = "https://yandex.ru"
+	conf := config.Config{}
+	conf.ServerAddress = "localhost:8080"
+	conf.ResponseAddress = "http://localhost:8080"
 
 	tests := []struct {
 		name string
@@ -107,7 +114,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewGetHandler(store)
+			handler := NewGetHandler(store, conf)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			res := tt.args.w.Result()
 			defer res.Body.Close()
