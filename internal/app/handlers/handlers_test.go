@@ -39,7 +39,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	store := storage.NewStorage()
 	store.FullURLKeysMap["https://yandex.ru"] = "abcABC"
 	store.AliasKeysMap["abcABC"] = "https://yandex.ru"
-	conf := &config.Config{}
+	conf := config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 
@@ -91,7 +91,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	store := storage.NewStorage()
 	store.FullURLKeysMap["https://yandex.ru"] = "abcABC"
 	store.AliasKeysMap["abcABC"] = "https://yandex.ru"
-	conf := &config.Config{}
+	conf := config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 
@@ -104,7 +104,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 			name: "positive GET handler test",
 			args: args{
 				w: httptest.NewRecorder(),
-				req: AddChiContext(httptest.NewRequest(http.MethodGet, "/abcABC", nil), map[string]string{"id": "abcABC"}),
+				req: AddChiContext(httptest.NewRequest(http.MethodGet, "/abcABC", nil), map[string]string{idParam: "abcABC"}),
 			},
 			want: want{
 				code:   http.StatusTemporaryRedirect,

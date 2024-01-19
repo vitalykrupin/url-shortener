@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	config := &config.Config{}
+	config := config.Config{}
 	config.InitConfig()
 
 	store := storage.NewStorage()
