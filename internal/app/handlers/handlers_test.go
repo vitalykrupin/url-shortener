@@ -63,7 +63,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewPostHandler(store,conf)
+			handler := NewPostHandler(store, conf)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			res := tt.args.w.Result()
 			defer res.Body.Close()
@@ -104,7 +104,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 			name: "positive GET handler test",
 			args: args{
 				w: httptest.NewRecorder(),
-				req: AddChiContext(httptest.NewRequest(http.MethodGet, "/abcABC", nil), map[string]string{"id": "abcABC"}),
+				req: AddChiContext(httptest.NewRequest(http.MethodGet, "/abcABC", nil), map[string]string{idParam: "abcABC"}),
 			},
 			want: want{
 				code:   http.StatusTemporaryRedirect,

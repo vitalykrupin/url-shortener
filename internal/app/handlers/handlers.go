@@ -12,7 +12,10 @@ import (
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 )
 
-const aliasSize int = 7
+const (
+	aliasSize int = 7
+	idParam = "id"
+)
 
 type PostHandler struct {
 	http.Handler
@@ -27,17 +30,17 @@ type GetHandler struct {
 }
 
 func NewPostHandler(store *storage.DB, config config.Config) *PostHandler {
-	h := new(PostHandler)
-	h.store = store
-	h.config = config
-	return h
+	return &PostHandler{
+		store: store,
+		config: config,
+	}
 }
 
 func NewGetHandler(store *storage.DB, config config.Config) *GetHandler {
-	h := new(GetHandler)
-	h.store = store
-	h.config = config
-	return h
+	return &GetHandler{
+		store: store,
+		config: config,
+	}
 }
 
 func (handler *PostHandler) randomString(size int) string {
@@ -78,7 +81,7 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Only GET requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
-	alias := chi.URLParam(req, "id")
+	alias := chi.URLParam(req, idParam)
 	if alias == "" {
 		http.Error(w, "Get query require Id", http.StatusBadRequest)
 		return

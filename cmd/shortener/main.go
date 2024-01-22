@@ -11,7 +11,8 @@ import (
 
 func main() {
 	config := config.Config{}
-	config.ParseFlags()
+	config.InitConfig()
+
 	store := storage.NewStorage()
 	router := chi.NewRouter()
 
