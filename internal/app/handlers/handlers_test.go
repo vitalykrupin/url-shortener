@@ -1,17 +1,28 @@
 package handlers
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
+
+func AddChiContext(r *http.Request, params map[string]string) *http.Request {
+	c := chi.NewRouteContext()
+	req := r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, c))
+	for key, val := range params {
+		c.URLParams.Add(key, val)
+	}
+
+	return req
+}
 
 func TestPostHandler_ServeHTTP(t *testing.T) {
 	type args struct {
@@ -77,10 +88,6 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	store.FullURLKeysMap["https://yandex.ru"] = "abcABC"
 	store.AliasKeysMap["abcABC"] = "https://yandex.ru"
 
-	vars := map[string]string{
-        "id": "abcABC",
-    }
-
 	tests := []struct {
 		name string
 		args args
@@ -90,7 +97,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 			name: "positive GET handler test",
 			args: args{
 				w: httptest.NewRecorder(),
-				req: httptest.NewRequest(http.MethodGet, "/", nil),
+				req: AddChiContext(httptest.NewRequest(http.MethodGet, "/abcABC", nil), map[string]string{"id": "abcABC"}),
 			},
 			want: want{
 				code:   http.StatusTemporaryRedirect,
@@ -101,7 +108,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewGetHandler(store)
-			handler.ServeHTTP(tt.args.w, mux.SetURLVars(tt.args.req, vars))
+			handler.ServeHTTP(tt.args.w, tt.args.req)
 			res := tt.args.w.Result()
 			defer res.Body.Close()
 			require.Equal(t, tt.want.code, res.StatusCode)

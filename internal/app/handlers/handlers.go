@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
@@ -73,8 +73,8 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Only GET requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
-	alias, ok := mux.Vars(req)["id"]
-	if !ok {
+	alias := chi.URLParam(req, "id")
+	if alias == "" {
 		http.Error(w, "Get query require Id", http.StatusBadRequest)
 		return
 	}
