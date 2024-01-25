@@ -31,7 +31,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 		req *http.Request
 	}
 	type want struct {
-		code      int
+		code        int
 		response    string
 		contentType string
 	}
@@ -55,8 +55,8 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 				req: httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://yandex.ru")),
 			},
 			want: want{
-				code: http.StatusCreated,
-				response: "abcABC",
+				code:        http.StatusCreated,
+				response:    "abcABC",
 				contentType: "text/plain",
 			},
 		},
@@ -103,11 +103,11 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		{
 			name: "positive GET handler test",
 			args: args{
-				w: httptest.NewRecorder(),
+				w:   httptest.NewRecorder(),
 				req: AddChiContext(httptest.NewRequest(http.MethodGet, "/abcABC", nil), map[string]string{idParam: "abcABC"}),
 			},
 			want: want{
-				code:   http.StatusTemporaryRedirect,
+				code:     http.StatusTemporaryRedirect,
 				location: "https://yandex.ru",
 			},
 		},
