@@ -20,6 +20,7 @@ func main() {
 
 	router.Use(middleware.Logging)
 	router.Handle(`/`, handlers.NewPostHandler(store, config))
+	router.Handle(`/api/shorten`, handlers.NewPostJSONHandler(store, config))
 	router.Handle(`/{id}`, handlers.NewGetHandler(store, config))
 
 	err := http.ListenAndServe(config.ServerAddress, router)

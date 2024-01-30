@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -126,6 +127,89 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 				defer newResult.Body.Close()
 				assert.Equal(t, res.StatusCode, newResult.StatusCode)
 				assert.Equal(t, res.Header.Get("Location"), newResult.Header.Get("Location"))
+			}
+		})
+	}
+}
+
+func WithHeader(r *http.Request, key string, value string) *http.Request {
+	r.Header.Add(key, value)
+	return r
+}
+
+func TestPostJSONHandler_ServeHTTP(t *testing.T) {
+	type args struct {
+		w   *httptest.ResponseRecorder
+		req *http.Request
+	}
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+
+	store := storage.NewStorage()
+	store.FullURLKeysMap["https://yandex.ru"] = "abcABC"
+	store.AliasKeysMap["abcABC"] = "https://yandex.ru"
+	conf := config.Config{}
+	conf.ServerAddress = "localhost:8080"
+	conf.ResponseAddress = "http://localhost:8080"
+
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "positive POST_JSON handler test",
+			args: args{
+				w:   httptest.NewRecorder(),
+				req: WithHeader(httptest.NewRequest(http.MethodPost, "/api/shorten/", strings.NewReader("{\"url\":\"https://yandex.ru\"}")), "Content-Type", "application/json"),
+			},
+			want: want{
+				code:        http.StatusCreated,
+				response:    "{\"result\":\"http://localhost:8080/abcABC\"}",
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "negative POST_JSON handler test",
+			args: args{
+				w:   httptest.NewRecorder(),
+				req: WithHeader(httptest.NewRequest(http.MethodPost, "/api/shorten/", strings.NewReader("https://yandex.ru")), "Content-Type", "application/json"),
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "{\"result\":\"http://localhost:8080/abcABC\"}",
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "invalid json POST_JSON handler test",
+			args: args{
+				w:   httptest.NewRecorder(),
+				req: WithHeader(httptest.NewRequest(http.MethodPost, "/api/shorten/", strings.NewReader("{\"url\":\"https://yandex.ru\"")), "Content-Type", "application/json"),
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "{\"result\":\"http://localhost:8080/abcABC\"}",
+				contentType: "application/json",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewPostJSONHandler(store, conf)
+			h.ServeHTTP(tt.args.w, tt.args.req)
+			result := tt.args.w.Result()
+			defer result.Body.Close()
+			require.Equal(t, tt.want.code, result.StatusCode)
+			tt.args.w.Flush()
+			if result.StatusCode != http.StatusBadRequest {
+				resp := new(postJSONResponse)
+				err := json.NewDecoder(result.Body).Decode(resp)
+				require.NoError(t, err)
+				require.NotEmpty(t, resp.Alias)
 			}
 		})
 	}
