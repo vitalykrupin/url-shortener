@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/caarlos0/env/v10"
 )
@@ -15,11 +16,13 @@ const (
 type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS"`
 	ResponseAddress string `env:"BASE_URL"`
+	FileStorePath   string `env:"FILE_STORAGE_PATH"`
 }
 
 func (conf *Config) InitConfig() {
 	conf.ServerAddress = defaultServerAddress
 	conf.ResponseAddress = defaultResponseAddress
+	conf.FileStorePath = os.TempDir() + "short-url-db.json"
 	conf.parseFlags()
 	conf.parseEnv()
 }
@@ -38,6 +41,10 @@ func (conf *Config) parseFlags() {
 	})
 	flag.Func("b", "example '-b http://localhost:8000'", func(addr string) error {
 		conf.ResponseAddress = addr
+		return nil
+	})
+	flag.Func("f", "example '-f /tmp/testfile.json'", func(path string) error {
+		conf.FileStorePath = path
 		return nil
 	})
 	flag.Parse()

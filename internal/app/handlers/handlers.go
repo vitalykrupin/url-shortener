@@ -114,6 +114,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		handler.store.AliasKeysMap[alias] = string(fullURL)
 		fmt.Fprint(w, handler.config.ResponseAddress+"/"+alias)
 	}
+	handler.store.SaveJSONtoFS(handler.config.FileStorePath)
 }
 
 func (handler *PostJSONHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -148,6 +149,7 @@ func (handler *PostJSONHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 			return
 		}
 	}
+	handler.store.SaveJSONtoFS(handler.config.FileStorePath)
 }
 
 func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {

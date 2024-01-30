@@ -16,13 +16,17 @@ func main() {
 	config.InitConfig()
 
 	store := storage.NewStorage()
-	router := chi.NewRouter()
+	storeLoadErr := store.LoadJSONfromFS(config.FileStorePath)
+	if storeLoadErr != nil {
+		log.Fatalf("Can not load store from file: %v", storeLoadErr)
+	}
 
+	router := chi.NewRouter()
 	router.Use(middleware.Logging)
 	router.Use(middleware.GzipMiddleware)
 	router.Handle(`/`, handlers.NewPostHandler(store, config))
-	router.Handle(`/api/shorten`, handlers.NewPostJSONHandler(store, config))
 	router.Handle(`/{id}`, handlers.NewGetHandler(store, config))
+	router.Method(http.MethodPost, `/api/shorten`, handlers.NewPostJSONHandler(store, config))
 
 	err := http.ListenAndServe(config.ServerAddress, router)
 	if err != nil {
