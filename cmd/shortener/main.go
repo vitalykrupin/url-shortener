@@ -24,9 +24,10 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logging)
 	router.Use(middleware.GzipMiddleware)
-	router.Handle(`/`, handlers.NewPostHandler(store, config))
+
 	router.Handle(`/{id}`, handlers.NewGetHandler(store, config))
-	router.Method(http.MethodPost, `/api/shorten`, handlers.NewPostJSONHandler(store, config))
+	router.Handle(`/`, handlers.NewPostHandler(store, config))
+	router.Method(http.MethodPost, `/api/shorten`, handlers.NewPostHandler(store, config))
 
 	err := http.ListenAndServe(config.ServerAddress, router)
 	if err != nil {
