@@ -19,6 +19,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logging)
+	router.Use(middleware.GzipMiddleware)
 	router.Handle(`/`, handlers.NewPostHandler(store, config))
 	router.Handle(`/api/shorten`, handlers.NewPostJSONHandler(store, config))
 	router.Handle(`/{id}`, handlers.NewGetHandler(store, config))
