@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -30,6 +31,12 @@ type GetHandler struct {
 	config config.Config
 }
 
+type PostJSONHandler struct {
+	http.Handler
+	store  *storage.DB
+	config config.Config
+}
+
 func NewPostHandler(store *storage.DB, config config.Config) *PostHandler {
 	return &PostHandler{
 		store:  store,
@@ -44,7 +51,22 @@ func NewGetHandler(store *storage.DB, config config.Config) *GetHandler {
 	}
 }
 
-func (handler *PostHandler) randomString(size int) string {
+func NewPostJSONHandler(store *storage.DB, config config.Config) *PostJSONHandler {
+	return &PostJSONHandler{
+		store:  store,
+		config: config,
+	}
+}
+
+type postJSONRequest struct {
+	FullURL string `json:"url"`
+}
+
+type postJSONResponse struct {
+	Alias string `json:"result"`
+}
+
+func randomString(size int) string {
 	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 	result := make([]rune, size)
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -52,6 +74,22 @@ func (handler *PostHandler) randomString(size int) string {
 		result[i] = chars[rnd.Intn(len(chars))]
 	}
 	return string(result)
+}
+
+func parseJSON(req *http.Request) (string, error) {
+	jsonReq := new(postJSONRequest)
+	err := json.NewDecoder(req.Body).Decode(jsonReq)
+	if err != nil {
+		return "", err
+	}
+	return jsonReq.FullURL, nil
+}
+
+func printJSONResponse(w http.ResponseWriter, req *http.Request, alias string) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err := json.NewEncoder(w).Encode(postJSONResponse{Alias: alias})
+	return err
 }
 
 func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -71,10 +109,44 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		fmt.Fprint(w, handler.config.ResponseAddress+"/"+alias)
 		return
 	} else {
-		alias := handler.randomString(aliasSize)
+		alias := randomString(aliasSize)
 		handler.store.FullURLKeysMap[string(fullURL)] = alias
 		handler.store.AliasKeysMap[alias] = string(fullURL)
 		fmt.Fprint(w, handler.config.ResponseAddress+"/"+alias)
+	}
+}
+
+func (handler *PostJSONHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		log.Println("Only POST requests are allowed!")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if req.Header.Get("Content-Type") != "application/json" {
+		log.Println("JSON string is missing or not valid")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	fullURL, err := parseJSON(req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if alias, ok := handler.store.FullURLKeysMap[string(fullURL)]; ok {
+		err := printJSONResponse(w, req, handler.config.ResponseAddress+"/"+alias)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		alias := randomString(aliasSize)
+		handler.store.FullURLKeysMap[string(fullURL)] = alias
+		handler.store.AliasKeysMap[alias] = string(fullURL)
+		err := printJSONResponse(w, req, handler.config.ResponseAddress+"/"+alias)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 	}
 }
 
