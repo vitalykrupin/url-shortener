@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	defaultServerAddress = "localhost:8080"
+	defaultServerAddress   = "localhost:8080"
 	defaultResponseAddress = "http://localhost:8080"
 )
 

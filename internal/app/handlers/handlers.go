@@ -3,42 +3,43 @@ package handlers
 import (
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
 const (
 	aliasSize int = 7
-	idParam = "id"
+	idParam       = "id"
 )
 
 type PostHandler struct {
 	http.Handler
-	store *storage.DB
+	store  *storage.DB
 	config config.Config
 }
 
 type GetHandler struct {
 	http.Handler
-	store *storage.DB
+	store  *storage.DB
 	config config.Config
 }
 
 func NewPostHandler(store *storage.DB, config config.Config) *PostHandler {
 	return &PostHandler{
-		store: store,
+		store:  store,
 		config: config,
 	}
 }
 
 func NewGetHandler(store *storage.DB, config config.Config) *GetHandler {
 	return &GetHandler{
-		store: store,
+		store:  store,
 		config: config,
 	}
 }
@@ -55,7 +56,8 @@ func (handler *PostHandler) randomString(size int) string {
 
 func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
-		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
+		log.Println("Only POST requests are allowed!")
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	fullURL, err := io.ReadAll(req.Body)
@@ -78,12 +80,14 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 
 func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
-		http.Error(w, "Only GET requests are allowed!", http.StatusMethodNotAllowed)
+		log.Println("Only GET requests are allowed!")
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	alias := chi.URLParam(req, idParam)
 	if alias == "" {
-		http.Error(w, "Get query require Id", http.StatusBadRequest)
+		log.Println("Get query require Id")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if fullURL, ok := handler.store.AliasKeysMap[alias]; ok {
@@ -91,7 +95,7 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
 	} else {
-		fmt.Fprint(w, "URL by alias "+alias+" is not exists")
+		log.Println("URL by alias " + alias + " is not exists")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
