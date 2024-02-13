@@ -25,12 +25,12 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		location string
 	}
 
-	store := storage.NewStorage()
-	store.Store.FullURLKeysMap["https://yandex.ru"] = "abcABC"
-	store.Store.AliasKeysMap["abcABC"] = "https://yandex.ru"
-	conf := config.Config{}
+	store := storage.NewMemoryStorage()
+	store.AddToMemoryStore("https://yandex.ru", "abcABC")
+	conf := &config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
+	app := config.NewApp(conf, store)
 
 	tests := []struct {
 		name string
@@ -51,7 +51,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewGetHandler(store, conf)
+			handler := NewGetHandler(app)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			res := tt.args.w.Result()
 			defer res.Body.Close()
@@ -77,10 +77,11 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 		code int
 	}
 
-	store := storage.NewStorage()
-	conf := config.Config{}
+	store := storage.NewMemoryStorage()
+	conf := &config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
+	app := config.NewApp(conf, store)
 
 	tests := []struct {
 		name string
@@ -100,7 +101,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewPostHandler(store, conf)
+			handler := NewPostHandler(app)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			result := tt.args.w.Result()
 			defer result.Body.Close()
@@ -124,10 +125,11 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 		code int
 	}
 
-	store := storage.NewStorage()
-	conf := config.Config{}
+	store := storage.NewMemoryStorage()
+	conf := &config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
+	app := config.NewApp(conf, store)
 
 	tests := []struct {
 		name string
@@ -167,7 +169,7 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewPostHandler(store, conf)
+			handler := NewPostHandler(app)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			result := tt.args.w.Result()
 			defer result.Body.Close()

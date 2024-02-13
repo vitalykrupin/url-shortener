@@ -17,6 +17,7 @@ type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS"`
 	ResponseAddress string `env:"BASE_URL"`
 	FileStorePath   string `env:"FILE_STORAGE_PATH"`
+	DBDSN           string `env:"DATABASE_DSN"`
 }
 
 func (conf *Config) InitConfig() {
@@ -35,16 +36,20 @@ func (conf *Config) parseEnv() {
 }
 
 func (conf *Config) parseFlags() {
-	flag.Func("a", "example '-a localhost:8080'", func(addr string) error {
+	flag.Func("a", "example: '-a localhost:8080'", func(addr string) error {
 		conf.ServerAddress = addr
 		return nil
 	})
-	flag.Func("b", "example '-b http://localhost:8000'", func(addr string) error {
+	flag.Func("b", "example: '-b http://localhost:8000'", func(addr string) error {
 		conf.ResponseAddress = addr
 		return nil
 	})
-	flag.Func("f", "example '-f /tmp/testfile.json'", func(path string) error {
+	flag.Func("f", "example: '-f /tmp/testfile.json'", func(path string) error {
 		conf.FileStorePath = path
+		return nil
+	})
+	flag.Func("d", "example: '-d postgres://username:password@localhost:5432/database_name'", func(dbAddr string) error {
+		conf.DBDSN = dbAddr
 		return nil
 	})
 	flag.Parse()
