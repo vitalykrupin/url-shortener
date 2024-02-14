@@ -1,9 +1,7 @@
 package handlers
 
-import (
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
-)
+import "github.com/vitalykrupin/url-shortener.git/internal/app"
 
 type BaseHandler struct {
-	app *config.App
+	app *app.App
 }

@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener.git/internal/app"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
 )
 
@@ -28,7 +28,7 @@ type PostHandler struct {
 	BaseHandler
 }
 
-func NewPostHandler(app *config.App) *PostHandler {
+func NewPostHandler(app *app.App) *PostHandler {
 	return &PostHandler{
 		BaseHandler: BaseHandler{
 			app: app,
@@ -49,7 +49,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	if alias, ok := handler.app.Storage.GetAlias(URL); ok {
+	if alias, err := handler.app.Storage.GetAlias(URL); err != nil {
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -57,7 +57,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		}
 	} else {
 		alias := utils.RandomString(aliasSize)
-		handler.app.Storage.AddToMemoryStore(URL, alias)
+		handler.app.Storage.Add(URL, alias)
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

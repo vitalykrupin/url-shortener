@@ -3,17 +3,10 @@ package storage
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"os"
 	"sync"
 )
-
-type StorageKeeper interface {
-	AddToMemoryStore(url, alias string)
-	GetURL(alias string) (url string, ok bool)
-	GetAlias(url string) (alias string, ok bool)
-	SaveJSONtoFS(path string)
-	LoadJSONfromFS(path string) error
-}
 
 type MemoryStorage struct {
 	AliasKeysMap map[string]string
@@ -33,25 +26,34 @@ func NewMemoryStorage() *Storage {
 	return storage
 }
 
-func (storage *Storage) AddToMemoryStore(url, alias string) {
+func (storage *Storage) Add(url, alias string) error {
 	storage.Mu.Lock()
 	defer storage.Mu.Unlock()
 	storage.MemoryStorage.AliasKeysMap[alias] = url
 	storage.MemoryStorage.URLKeysMap[url] = alias
+	return nil
 }
 
-func (storage *Storage) GetURL(alias string) (url string, found bool) {
+func (storage *Storage) GetURL(alias string) (url string, err error) {
 	storage.Mu.Lock()
 	defer storage.Mu.Unlock()
-	url, found = storage.MemoryStorage.AliasKeysMap[alias]
-	return url, found
+	if url, ok := storage.MemoryStorage.AliasKeysMap[alias]; !ok {
+		log.Println("URL by alias " + alias + " is not exists")
+		return "", err
+	} else {
+		return url, nil
+	}
 }
 
-func (storage *Storage) GetAlias(url string) (alias string, found bool) {
+func (storage *Storage) GetAlias(url string) (alias string, err error) {
 	storage.Mu.Lock()
 	defer storage.Mu.Unlock()
-	alias, found = storage.MemoryStorage.URLKeysMap[url]
-	return alias, found
+	if alias, ok := storage.MemoryStorage.URLKeysMap[url]; !ok {
+		log.Println("Alias by URL " + url + " is not exists")
+		return "", err
+	} else {
+		return alias, nil
+	}
 }
 
 func (storage *Storage) SaveJSONtoFS(path string) {

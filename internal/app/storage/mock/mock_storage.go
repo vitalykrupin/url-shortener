@@ -33,24 +33,40 @@ func (m *MockStorageKeeper) EXPECT() *MockStorageKeeperMockRecorder {
 	return m.recorder
 }
 
-// AddToMemoryStore mocks base method.
-func (m *MockStorageKeeper) AddToMemoryStore(arg0, arg1 string) {
+// Add mocks base method.
+func (m *MockStorageKeeper) Add(arg0, arg1 string) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddToMemoryStore", arg0, arg1)
+	ret := m.ctrl.Call(m, "Add", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// AddToMemoryStore indicates an expected call of AddToMemoryStore.
-func (mr *MockStorageKeeperMockRecorder) AddToMemoryStore(arg0, arg1 interface{}) *gomock.Call {
+// Add indicates an expected call of Add.
+func (mr *MockStorageKeeperMockRecorder) Add(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddToMemoryStore", reflect.TypeOf((*MockStorageKeeper)(nil).AddToMemoryStore), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockStorageKeeper)(nil).Add), arg0, arg1)
+}
+
+// Close mocks base method.
+func (m *MockStorageKeeper) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockStorageKeeperMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockStorageKeeper)(nil).Close))
 }
 
 // GetAlias mocks base method.
-func (m *MockStorageKeeper) GetAlias(arg0 string) (string, bool) {
+func (m *MockStorageKeeper) GetAlias(arg0 string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAlias", arg0)
 	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(bool)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
@@ -61,11 +77,11 @@ func (mr *MockStorageKeeperMockRecorder) GetAlias(arg0 interface{}) *gomock.Call
 }
 
 // GetURL mocks base method.
-func (m *MockStorageKeeper) GetURL(arg0 string) (string, bool) {
+func (m *MockStorageKeeper) GetURL(arg0 string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetURL", arg0)
 	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(bool)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
@@ -87,6 +103,20 @@ func (m *MockStorageKeeper) LoadJSONfromFS(arg0 string) error {
 func (mr *MockStorageKeeperMockRecorder) LoadJSONfromFS(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadJSONfromFS", reflect.TypeOf((*MockStorageKeeper)(nil).LoadJSONfromFS), arg0)
+}
+
+// Ping mocks base method.
+func (m *MockStorageKeeper) Ping() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Ping")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Ping indicates an expected call of Ping.
+func (mr *MockStorageKeeperMockRecorder) Ping() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockStorageKeeper)(nil).Ping))
 }
 
 // SaveJSONtoFS mocks base method.

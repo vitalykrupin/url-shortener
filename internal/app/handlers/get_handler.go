@@ -5,14 +5,14 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener.git/internal/app"
 )
 
 type GetHandler struct {
 	BaseHandler
 }
 
-func NewGetHandler(app *config.App) *GetHandler {
+func NewGetHandler(app *app.App) *GetHandler {
 	return &GetHandler{
 		BaseHandler: BaseHandler{
 			app: app,
@@ -32,13 +32,13 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if URL, ok := handler.app.Storage.GetURL(alias); ok {
-		w.Header().Add("Location", URL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
-		return
-	} else {
+	if URL, err := handler.app.Storage.GetURL(alias); err != nil {
 		log.Println("URL by alias " + alias + " is not exists")
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	} else {
+		w.Header().Add("Location", URL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
 	}
 }
