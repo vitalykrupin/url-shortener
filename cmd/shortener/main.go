@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -22,7 +23,7 @@ func run() error {
 	conf := &config.Config{}
 	conf.InitConfig()
 
-	store, err := storage.NewDB(conf)
+	store, err := storage.NewDB(context.Background(), conf)
 	if err != nil {
 		store = storage.NewFileStorage(conf)
 	}

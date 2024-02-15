@@ -50,7 +50,7 @@ func (conf *Config) parseFlags() {
 		conf.FileStorePath = path
 		return nil
 	})
-	flag.Func("d", "example: '-d postgres://username:password@localhost:5432/database_name'", func(dbAddr string) error {
+	flag.Func("d", "example: '-d postgres://postgres:pwd@localhost:5432/postgres?sslmode=disable'", func(dbAddr string) error {
 		conf.DBDSN = dbAddr
 		return nil
 	})

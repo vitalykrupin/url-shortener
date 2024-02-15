@@ -21,10 +21,11 @@ func (handler *GetPingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	if handler.app.Storage != nil {
 		err := handler.app.Storage.PingStorage(req.Context())
 		if err != nil {
-			w.WriteHeader(http.StatusOK)
+			log.Println("Can not connect to database")
 			return
 		}
-		log.Println("Can not connect to database")
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 	w.WriteHeader(http.StatusInternalServerError)
 }

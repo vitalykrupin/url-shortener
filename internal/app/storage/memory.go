@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"log"
 	"sync"
 )
@@ -25,7 +26,7 @@ func NewMemoryStorage() *SyncMemoryStorage {
 	}
 }
 
-func (s *SyncMemoryStorage) Add(url, alias string) error {
+func (s *SyncMemoryStorage) Add(alias, url string) error {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	s.MemoryStorage.AliasKeysMap[alias] = url
@@ -38,7 +39,7 @@ func (s *SyncMemoryStorage) GetURL(alias string) (url string, err error) {
 	defer s.Mu.Unlock()
 	if url, ok := s.MemoryStorage.AliasKeysMap[alias]; !ok {
 		log.Println("URL by alias " + alias + " is not exists")
-		return "", err
+		return "", fmt.Errorf("url by alias %s is not exists", alias)
 	} else {
 		return url, nil
 	}
@@ -49,7 +50,7 @@ func (s *SyncMemoryStorage) GetAlias(url string) (alias string, err error) {
 	defer s.Mu.Unlock()
 	if alias, ok := s.MemoryStorage.URLKeysMap[url]; !ok {
 		log.Println("Alias by URL " + url + " is not exists")
-		return "", err
+		return "", fmt.Errorf("alias by URL %s is not exists", url)
 	} else {
 		return alias, nil
 	}

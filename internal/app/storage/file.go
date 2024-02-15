@@ -12,7 +12,7 @@ import (
 )
 
 type JSONFS struct {
-	UUID  string `json:"uuid"`
+	UUID  string `json:"id"`
 	Alias string `json:"alias"`
 	URL   string `json:"url"`
 }
@@ -51,7 +51,7 @@ func (f *FileStorage) LoadJSONfromFS() error {
 		data[urls.Alias] = urls.URL
 	}
 	for alias, url := range data {
-		err := f.SyncMemoryStorage.Add(url, alias)
+		err := f.SyncMemoryStorage.Add(alias, url)
 		if err != nil {
 			log.Println("Can not save data to memory")
 			return err
@@ -60,8 +60,8 @@ func (f *FileStorage) LoadJSONfromFS() error {
 	return nil
 }
 
-func (f *FileStorage) Add(ctx context.Context, url, alias string) error {
-	err := f.SyncMemoryStorage.Add(url, alias)
+func (f *FileStorage) Add(ctx context.Context, alias, url string) error {
+	err := f.SyncMemoryStorage.Add(alias, url)
 	if err != nil {
 		log.Println("Can not save data to memory")
 		return err
