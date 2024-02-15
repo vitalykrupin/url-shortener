@@ -13,15 +13,13 @@ type GetPingHandler struct {
 
 func NewGetPingHandler(app *app.App) *GetPingHandler {
 	return &GetPingHandler{
-		BaseHandler: BaseHandler{
-			app: app,
-		},
+		BaseHandler: BaseHandler{app},
 	}
 }
 
 func (handler *GetPingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if handler.app.DB != nil {
-		err := handler.app.DB.PingContext(req.Context())
+	if handler.app.Storage != nil {
+		err := handler.app.Storage.PingStorage(req.Context())
 		if err != nil {
 			w.WriteHeader(http.StatusOK)
 			return

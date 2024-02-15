@@ -11,6 +11,7 @@ import (
 const (
 	defaultServerAddress   = "localhost:8080"
 	defaultResponseAddress = "http://localhost:8080"
+	defaultDBDSN           = ""
 )
 
 type Config struct {
@@ -23,6 +24,7 @@ type Config struct {
 func (conf *Config) InitConfig() {
 	conf.ServerAddress = defaultServerAddress
 	conf.ResponseAddress = defaultResponseAddress
+	conf.DBDSN = defaultDBDSN
 	conf.FileStorePath = os.TempDir() + "short-url-db.json"
 	conf.parseFlags()
 	conf.parseEnv()

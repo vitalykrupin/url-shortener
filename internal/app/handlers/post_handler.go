@@ -30,9 +30,7 @@ type PostHandler struct {
 
 func NewPostHandler(app *app.App) *PostHandler {
 	return &PostHandler{
-		BaseHandler: BaseHandler{
-			app: app,
-		},
+		BaseHandler: BaseHandler{app},
 	}
 }
 
@@ -49,7 +47,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	if alias, err := handler.app.Storage.GetAlias(URL); err != nil {
+	if alias, err := handler.app.Storage.GetAlias(req.Context(), URL); err != nil {
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -57,14 +55,13 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		}
 	} else {
 		alias := utils.RandomString(aliasSize)
-		handler.app.Storage.Add(URL, alias)
+		handler.app.Storage.Add(req.Context(), URL, alias)
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	}
-	handler.app.Storage.SaveJSONtoFS(handler.app.Config.FileStorePath)
 }
 
 func parseJSON(req *http.Request) (string, error) {

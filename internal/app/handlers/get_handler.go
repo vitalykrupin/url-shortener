@@ -14,9 +14,7 @@ type GetHandler struct {
 
 func NewGetHandler(app *app.App) *GetHandler {
 	return &GetHandler{
-		BaseHandler: BaseHandler{
-			app: app,
-		},
+		BaseHandler: BaseHandler{app},
 	}
 }
 
@@ -32,7 +30,7 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if URL, err := handler.app.Storage.GetURL(alias); err != nil {
+	if URL, err := handler.app.Storage.GetURL(req.Context(), alias); err != nil {
 		log.Println("URL by alias " + alias + " is not exists")
 		w.WriteHeader(http.StatusBadRequest)
 		return
