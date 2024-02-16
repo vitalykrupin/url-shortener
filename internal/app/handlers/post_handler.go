@@ -48,7 +48,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	if alias, err := handler.app.Storage.GetAlias(req.Context(), URL); err == nil {
-		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
+		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias, true)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -59,7 +59,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 			log.Println("Can not add note to database")
 			return
 		}
-		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
+		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias, false)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -80,12 +80,21 @@ func parseBody(req *http.Request) (string, error) {
 	return string(body), err
 }
 
-func printResponse(w http.ResponseWriter, req *http.Request, alias string) error {
+func printResponse(w http.ResponseWriter, req *http.Request, alias string, allreadyAdded bool) error {
 	if req.Header.Get("Content-Type") == "application/json" {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		if allreadyAdded {
+			w.WriteHeader(http.StatusConflict)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+		}
 		err := json.NewEncoder(w).Encode(postJSONResponse{Alias: alias})
 		return err
+	}
+	if allreadyAdded {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
 	}
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprint(w, alias)

@@ -25,7 +25,7 @@ func NewDB(ctx context.Context, cfg *config.Config) (Storage, error) {
 	}
 	// defer conn.Close(context.Background())
 
-	_, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS urls (id serial PRIMARY KEY, alias character(255) NOT NULL UNIQUE, url character(255) NOT NULL)`)
+	_, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS urls (id serial PRIMARY KEY, alias TEXT NOT NULL UNIQUE, url TEXT NOT NULL)`)
 	if err != nil {
 		log.Println("Can not create table")
 		return nil, err

@@ -42,7 +42,7 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	var (
 		jsonReq []postBatchRequestUnit
-		resp []postBatchResponseUnit
+		resp    []postBatchResponseUnit
 	)
 	err := json.NewDecoder(req.Body).Decode(&jsonReq)
 	if err != nil {
@@ -52,7 +52,7 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	for _, v := range jsonReq {
 		if alias, err := handler.app.Storage.GetAlias(req.Context(), v.URL); err == nil {
-			err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
+			err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias, true)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -63,7 +63,7 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 				log.Println("Can not add note to database")
 				return
 			}
-			resp = append(resp, postBatchResponseUnit{CorrelationID: v.CorrelationID, Alias: handler.app.Config.ResponseAddress+"/"+alias})
+			resp = append(resp, postBatchResponseUnit{CorrelationID: v.CorrelationID, Alias: handler.app.Config.ResponseAddress + "/" + alias})
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
