@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -18,8 +19,11 @@ func NewGetPingHandler(app *app.App) *GetPingHandler {
 }
 
 func (handler *GetPingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), ctxTimeout)
+	defer cancel()
+
 	if handler.app.Storage != nil {
-		err := handler.app.Storage.PingStorage(req.Context())
+		err := handler.app.Storage.PingStorage(ctx)
 		if err != nil {
 			log.Println("Can not connect to database")
 			return

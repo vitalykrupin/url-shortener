@@ -23,7 +23,6 @@ func NewDB(ctx context.Context, cfg *config.Config) (Storage, error) {
 		log.Println("Can not connect to database")
 		return nil, err
 	}
-	// defer conn.Close(context.Background())
 
 	_, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS urls (id serial PRIMARY KEY, alias TEXT NOT NULL UNIQUE, url TEXT NOT NULL)`)
 	if err != nil {
@@ -34,13 +33,29 @@ func NewDB(ctx context.Context, cfg *config.Config) (Storage, error) {
 	return &DB{conn}, nil
 }
 
-func (d *DB) Add(ctx context.Context, alias string, url string) error {
-	_, err := d.conn.Exec(ctx, `INSERT INTO urls (alias, url) VALUES ($1, $2);`, alias, url)
-	return err
+func (d *DB) Add(ctx context.Context, batch map[Alias]OriginalURL) error {
+	var query = `INSERT INTO urls (alias, url) VALUES (@alias, @url)`
+	b := pgx.Batch{}
+	for alias, url := range batch {
+		b.Queue(query, pgx.NamedArgs{
+			"alias": alias,
+			"url":   url,
+		})
+	}
+	results := d.conn.SendBatch(ctx, &b)
+	defer results.Close()
+	
+	for range batch {
+		_, err := results.Exec()
+		if err != nil {
+			return fmt.Errorf("unable to insert row: %w", err)
+		}
+	}
+	return nil
 }
 
-func (d *DB) GetURL(ctx context.Context, alias string) (string, error) {
-	var url string
+func (d *DB) GetURL(ctx context.Context, alias Alias) (OriginalURL, error) {
+	var url OriginalURL
 	err := d.conn.QueryRow(ctx, `SELECT url FROM urls WHERE alias = $1;`, alias).Scan(&url)
 	if err != nil {
 		log.Println("Can not get URL from database")
@@ -49,8 +64,8 @@ func (d *DB) GetURL(ctx context.Context, alias string) (string, error) {
 	return url, nil
 }
 
-func (d *DB) GetAlias(ctx context.Context, url string) (string, error) {
-	var alias string
+func (d *DB) GetAlias(ctx context.Context, url OriginalURL) (Alias, error) {
+	var alias Alias
 	err := d.conn.QueryRow(ctx, `SELECT alias FROM urls WHERE url = $1;`, url).Scan(&alias)
 	if err != nil {
 		log.Println("Can not get alias from database")

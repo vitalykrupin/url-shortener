@@ -7,8 +7,8 @@ import (
 )
 
 type MemoryStorage struct {
-	AliasKeysMap map[string]string
-	URLKeysMap   map[string]string
+	AliasKeysMap map[Alias]OriginalURL
+	URLKeysMap   map[OriginalURL]Alias
 }
 
 type SyncMemoryStorage struct {
@@ -20,21 +20,23 @@ func NewMemoryStorage() *SyncMemoryStorage {
 	return &SyncMemoryStorage{
 		Mu: sync.Mutex{},
 		MemoryStorage: &MemoryStorage{
-			AliasKeysMap: make(map[string]string),
-			URLKeysMap:   make(map[string]string),
+			AliasKeysMap: make(map[Alias]OriginalURL),
+			URLKeysMap:   make(map[OriginalURL]Alias),
 		},
 	}
 }
 
-func (s *SyncMemoryStorage) Add(alias, url string) error {
+func (s *SyncMemoryStorage) Add(batch map[Alias]OriginalURL) error {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
-	s.MemoryStorage.AliasKeysMap[alias] = url
-	s.MemoryStorage.URLKeysMap[url] = alias
+	for k, v := range batch {
+		s.MemoryStorage.AliasKeysMap[k] = v
+		s.MemoryStorage.URLKeysMap[v] = k
+	}
 	return nil
 }
 
-func (s *SyncMemoryStorage) GetURL(alias string) (url string, err error) {
+func (s *SyncMemoryStorage) GetURL(alias Alias) (url OriginalURL, err error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	if url, ok := s.MemoryStorage.AliasKeysMap[alias]; !ok {
@@ -45,7 +47,7 @@ func (s *SyncMemoryStorage) GetURL(alias string) (url string, err error) {
 	}
 }
 
-func (s *SyncMemoryStorage) GetAlias(url string) (alias string, err error) {
+func (s *SyncMemoryStorage) GetAlias(url OriginalURL) (alias Alias, err error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	if alias, ok := s.MemoryStorage.URLKeysMap[url]; !ok {

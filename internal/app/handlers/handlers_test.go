@@ -32,7 +32,10 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
 	store := storage.NewFileStorage(conf)
-	store.Add(context.Background(), "abcABC", "https://yandex.ru")
+	var batch = map[storage.Alias]storage.OriginalURL{
+		"abcABC": "https://yandex.ru",
+	}
+	store.Add(context.Background(), batch)
 
 	newApp := app.NewApp(conf, store)
 

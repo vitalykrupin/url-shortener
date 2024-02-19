@@ -3,13 +3,10 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/router"
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/handlers"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/middleware"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
@@ -30,19 +27,7 @@ func run() error {
 
 	appInstance := app.NewApp(conf, store)
 
-	router := chi.NewRouter()
-	router.Use(middleware.Logging)
-	router.Use(middleware.GzipMiddleware)
+	router.Route(appInstance, conf)
 
-	router.Handle(`/{id}`, handlers.NewGetHandler(appInstance))
-	router.Handle(`/`, handlers.NewPostHandler(appInstance))
-	router.Method(http.MethodPost, `/api/shorten`, handlers.NewPostHandler(appInstance))
-	router.Method(http.MethodPost, `/api/shorten/batch`, handlers.NewPostBatchHandler(appInstance))
-	router.Method(http.MethodGet, `/ping`, handlers.NewGetPingHandler(appInstance))
-
-	errListen := http.ListenAndServe(conf.ServerAddress, router)
-	if errListen != nil {
-		log.Fatalf("ListenAndServe returns error: %v", err)
-	}
 	return nil
 }
