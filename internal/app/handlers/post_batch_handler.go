@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
+	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
 )
 
@@ -29,6 +31,8 @@ func NewPostBatchHandler(app *app.App) *PostBatchHandler {
 }
 
 func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), ctxTimeout)
+	defer cancel()
 	defer req.Body.Close()
 
 	if req.Method != http.MethodPost {
@@ -42,7 +46,7 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	var (
 		jsonReq []postBatchRequestUnit
-		resp []postBatchResponseUnit
+		resp    []postBatchResponseUnit
 	)
 	err := json.NewDecoder(req.Body).Decode(&jsonReq)
 	if err != nil {
@@ -50,23 +54,30 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	batch := make(map[storage.Alias]storage.OriginalURL)
 	for _, v := range jsonReq {
-		if alias, err := handler.app.Storage.GetAlias(req.Context(), v.URL); err == nil {
-			err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
+		if alias, err := handler.app.Storage.GetAlias(ctx, storage.OriginalURL(v.URL)); err == nil {
+			err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+string(alias), true)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 		} else {
 			alias := utils.RandomString(aliasSize)
-			if err := handler.app.Storage.Add(req.Context(), alias, v.URL); err != nil {
-				log.Println("Can not add note to database")
-				return
-			}
-			resp = append(resp, postBatchResponseUnit{CorrelationID: v.CorrelationID, Alias: handler.app.Config.ResponseAddress+"/"+alias})
+			batch[storage.Alias(alias)] = storage.OriginalURL(v.URL)
+			resp = append(resp, postBatchResponseUnit{CorrelationID: v.CorrelationID, Alias: handler.app.Config.ResponseAddress + "/" + alias})
 		}
 	}
+	if err := handler.app.Storage.Add(ctx, batch); err != nil {
+		log.Println("Can not add note to database")
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(resp)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }

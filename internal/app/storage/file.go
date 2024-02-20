@@ -12,9 +12,9 @@ import (
 )
 
 type JSONFS struct {
-	UUID  string `json:"id"`
-	Alias string `json:"alias"`
-	URL   string `json:"url"`
+	UUID  string      `json:"id"`
+	Alias Alias       `json:"alias"`
+	URL   OriginalURL `json:"url"`
 }
 type FileStorage struct {
 	SyncMemoryStorage *SyncMemoryStorage
@@ -41,7 +41,7 @@ func NewFileStorage(cfg *config.Config) Storage {
 
 func (f *FileStorage) LoadJSONfromFS() error {
 	scanner := bufio.NewScanner(f.file)
-	data := make(map[string]string)
+	data := make(map[Alias]OriginalURL)
 	for scanner.Scan() {
 		urls := JSONFS{}
 		err := json.Unmarshal(scanner.Bytes(), &urls)
@@ -50,18 +50,16 @@ func (f *FileStorage) LoadJSONfromFS() error {
 		}
 		data[urls.Alias] = urls.URL
 	}
-	for alias, url := range data {
-		err := f.SyncMemoryStorage.Add(alias, url)
-		if err != nil {
-			log.Println("Can not save data to memory")
-			return err
-		}
+	err := f.SyncMemoryStorage.Add(data)
+	if err != nil {
+		log.Println("Can not save data to memory")
+		return err
 	}
 	return nil
 }
 
-func (f *FileStorage) Add(ctx context.Context, alias, url string) error {
-	err := f.SyncMemoryStorage.Add(alias, url)
+func (f *FileStorage) Add(ctx context.Context, batch map[Alias]OriginalURL) error {
+	err := f.SyncMemoryStorage.Add(batch)
 	if err != nil {
 		log.Println("Can not save data to memory")
 		return err
@@ -72,12 +70,14 @@ func (f *FileStorage) Add(ctx context.Context, alias, url string) error {
 	}
 
 	writter := bufio.NewWriter(f.file)
-	urls := JSONFS{
-		UUID:  strconv.Itoa(len(f.SyncMemoryStorage.MemoryStorage.AliasKeysMap)),
-		Alias: alias,
-		URL:   url,
+	var urls = []JSONFS{}
+	for alias, url := range batch {
+		urls = append(urls, JSONFS{
+			UUID:  strconv.Itoa(len(f.SyncMemoryStorage.MemoryStorage.AliasKeysMap)),
+			Alias: alias,
+			URL:   url,
+		})
 	}
-
 	data, err := json.Marshal(urls)
 	if err != nil {
 		log.Println("Can not marshal data")
@@ -101,11 +101,11 @@ func (f *FileStorage) Add(ctx context.Context, alias, url string) error {
 	return nil
 }
 
-func (f *FileStorage) GetURL(ctx context.Context, alias string) (url string, err error) {
+func (f *FileStorage) GetURL(ctx context.Context, alias Alias) (url OriginalURL, err error) {
 	return f.SyncMemoryStorage.GetURL(alias)
 }
 
-func (f *FileStorage) GetAlias(ctx context.Context, url string) (alias string, err error) {
+func (f *FileStorage) GetAlias(ctx context.Context, url OriginalURL) (alias Alias, err error) {
 	return f.SyncMemoryStorage.GetAlias(url)
 }
 
