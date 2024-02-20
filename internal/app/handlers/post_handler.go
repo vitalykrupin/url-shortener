@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener.git/internal/app"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
 )
 
@@ -28,11 +28,9 @@ type PostHandler struct {
 	BaseHandler
 }
 
-func NewPostHandler(app *config.App) *PostHandler {
+func NewPostHandler(app *app.App) *PostHandler {
 	return &PostHandler{
-		BaseHandler: BaseHandler{
-			app: app,
-		},
+		BaseHandler: BaseHandler{app},
 	}
 }
 
@@ -43,13 +41,13 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	URL, err := parseJSON(req)
+	URL, err := parseBody(req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	if alias, ok := handler.app.Storage.GetAlias(URL); ok {
+	if alias, err := handler.app.Storage.GetAlias(req.Context(), URL); err == nil {
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -57,17 +55,19 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		}
 	} else {
 		alias := utils.RandomString(aliasSize)
-		handler.app.Storage.AddToMemoryStore(URL, alias)
+		if err := handler.app.Storage.Add(req.Context(), alias, URL); err != nil {
+			log.Println("Can not add note to database")
+			return
+		}
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	}
-	handler.app.Storage.SaveJSONtoFS(handler.app.Config.FileStorePath)
 }
 
-func parseJSON(req *http.Request) (string, error) {
+func parseBody(req *http.Request) (string, error) {
 	if req.Header.Get("Content-Type") == "application/json" {
 		jsonReq := new(postJSONRequest)
 		err := json.NewDecoder(req.Body).Decode(jsonReq)

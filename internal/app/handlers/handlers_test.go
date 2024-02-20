@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener.git/internal/app"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
 )
@@ -25,12 +27,14 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		location string
 	}
 
-	store := storage.NewMemoryStorage()
-	store.AddToMemoryStore("https://yandex.ru", "abcABC")
 	conf := &config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
-	app := config.NewApp(conf, store)
+	conf.FileStorePath = "/tmp/testfile.json"
+	store := storage.NewFileStorage(conf)
+	store.Add(context.Background(), "abcABC", "https://yandex.ru")
+
+	newApp := app.NewApp(conf, store)
 
 	tests := []struct {
 		name string
@@ -48,10 +52,21 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 				location: "https://yandex.ru",
 			},
 		},
+		{
+			name: "negative GET handler test",
+			args: args{
+				w:   httptest.NewRecorder(),
+				req: utils.AddChiContext(httptest.NewRequest(http.MethodGet, "/abc", nil), map[string]string{idParam: "abc"}),
+			},
+			want: want{
+				code:     http.StatusBadRequest,
+				location: "",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewGetHandler(app)
+			handler := NewGetHandler(newApp)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			res := tt.args.w.Result()
 			defer res.Body.Close()
@@ -77,11 +92,12 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 		code int
 	}
 
-	store := storage.NewMemoryStorage()
 	conf := &config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
-	app := config.NewApp(conf, store)
+	conf.FileStorePath = "/tmp/testfile.json"
+	store := storage.NewFileStorage(conf)
+	newApp := app.NewApp(conf, store)
 
 	tests := []struct {
 		name string
@@ -101,7 +117,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewPostHandler(app)
+			handler := NewPostHandler(newApp)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			result := tt.args.w.Result()
 			defer result.Body.Close()
@@ -125,11 +141,12 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 		code int
 	}
 
-	store := storage.NewMemoryStorage()
 	conf := &config.Config{}
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
-	app := config.NewApp(conf, store)
+	conf.FileStorePath = "/tmp/testfile.json"
+	store := storage.NewFileStorage(conf)
+	newApp := app.NewApp(conf, store)
 
 	tests := []struct {
 		name string
@@ -169,7 +186,7 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewPostHandler(app)
+			handler := NewPostHandler(newApp)
 			handler.ServeHTTP(tt.args.w, tt.args.req)
 			result := tt.args.w.Result()
 			defer result.Body.Close()

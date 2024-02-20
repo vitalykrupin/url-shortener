@@ -1,34 +1,31 @@
 package handlers
 
 import (
-	"context"
 	"log"
 	"net/http"
 
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener.git/internal/app"
 )
 
-type getPingHandler struct {
+type GetPingHandler struct {
 	BaseHandler
 }
 
-func NewGetPingHandler(app *config.App) *getPingHandler {
-	return &getPingHandler{
-		BaseHandler: BaseHandler{
-			app: app,
-		},
+func NewGetPingHandler(app *app.App) *GetPingHandler {
+	return &GetPingHandler{
+		BaseHandler: BaseHandler{app},
 	}
 }
 
-func (h *getPingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if h.app.DBPool != nil {
-		err := h.app.DBPool.Ping(context.Background())
-		if err == nil {
-			w.WriteHeader(http.StatusOK)
+func (handler *GetPingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if handler.app.Storage != nil {
+		err := handler.app.Storage.PingStorage(req.Context())
+		if err != nil {
+			log.Println("Can not connect to database")
 			return
 		}
-		log.Println(err)
+		w.WriteHeader(http.StatusOK)
+		return
 	}
-
 	w.WriteHeader(http.StatusInternalServerError)
 }

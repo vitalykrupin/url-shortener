@@ -11,6 +11,7 @@ import (
 const (
 	defaultServerAddress   = "localhost:8080"
 	defaultResponseAddress = "http://localhost:8080"
+	defaultDBDSN           = ""
 )
 
 type Config struct {
@@ -23,6 +24,7 @@ type Config struct {
 func (conf *Config) InitConfig() {
 	conf.ServerAddress = defaultServerAddress
 	conf.ResponseAddress = defaultResponseAddress
+	conf.DBDSN = defaultDBDSN
 	conf.FileStorePath = os.TempDir() + "short-url-db.json"
 	conf.parseFlags()
 	conf.parseEnv()
@@ -48,7 +50,7 @@ func (conf *Config) parseFlags() {
 		conf.FileStorePath = path
 		return nil
 	})
-	flag.Func("d", "example: '-d postgres://username:password@localhost:5432/database_name'", func(dbAddr string) error {
+	flag.Func("d", "example: '-d postgres://postgres:pwd@localhost:5432/postgres?sslmode=disable'", func(dbAddr string) error {
 		conf.DBDSN = dbAddr
 		return nil
 	})
