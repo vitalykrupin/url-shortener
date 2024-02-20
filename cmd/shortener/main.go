@@ -37,6 +37,7 @@ func run() error {
 	router.Handle(`/{id}`, handlers.NewGetHandler(appInstance))
 	router.Handle(`/`, handlers.NewPostHandler(appInstance))
 	router.Method(http.MethodPost, `/api/shorten`, handlers.NewPostHandler(appInstance))
+	router.Method(http.MethodPost, `/api/shorten/batch`, handlers.NewPostBatchHandler(appInstance))
 	router.Method(http.MethodGet, `/ping`, handlers.NewGetPingHandler(appInstance))
 
 	errListen := http.ListenAndServe(conf.ServerAddress, router)
