@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
 )
 
@@ -18,7 +17,7 @@ const (
 )
 
 type postJSONRequest struct {
-	FullURL string `json:"url"`
+	URL string `json:"url"`
 }
 
 type postJSONResponse struct {
@@ -29,11 +28,10 @@ type PostHandler struct {
 	BaseHandler
 }
 
-func NewPostHandler(store *storage.Store, config config.Config) *PostHandler {
+func NewPostHandler(app *config.App) *PostHandler {
 	return &PostHandler{
 		BaseHandler: BaseHandler{
-			store:  store,
-			config: config,
+			app: app,
 		},
 	}
 }
@@ -45,29 +43,28 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	fullURL, err := parseJSON(req)
+	URL, err := parseJSON(req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	if alias, ok := handler.store.Store.FullURLKeysMap[string(fullURL)]; ok {
-		err := printResponse(w, req, handler.config.ResponseAddress+"/"+alias)
+	if alias, ok := handler.app.Storage.GetAlias(URL); ok {
+		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	} else {
 		alias := utils.RandomString(aliasSize)
-		handler.store.Store.FullURLKeysMap[string(fullURL)] = alias
-		handler.store.Store.AliasKeysMap[alias] = string(fullURL)
-		err := printResponse(w, req, handler.config.ResponseAddress+"/"+alias)
+		handler.app.Storage.AddToMemoryStore(URL, alias)
+		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	}
-	handler.store.SaveJSONtoFS(handler.config.FileStorePath)
+	handler.app.Storage.SaveJSONtoFS(handler.app.Config.FileStorePath)
 }
 
 func parseJSON(req *http.Request) (string, error) {
@@ -77,7 +74,7 @@ func parseJSON(req *http.Request) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return jsonReq.FullURL, nil
+		return jsonReq.URL, nil
 	}
 	body, err := io.ReadAll(req.Body)
 	return string(body), err

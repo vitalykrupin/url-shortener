@@ -7,27 +7,56 @@ import (
 	"sync"
 )
 
-type DB struct {
-	AliasKeysMap   map[string]string
-	FullURLKeysMap map[string]string
+type StorageKeeper interface {
+	AddToMemoryStore(url, alias string)
+	GetURL(alias string) (url string, ok bool)
+	GetAlias(url string) (alias string, ok bool)
+	SaveJSONtoFS(path string)
+	LoadJSONfromFS(path string) error
 }
 
-type Store struct {
-	Mu    sync.Mutex
-	Store DB
+type MemoryStorage struct {
+	AliasKeysMap map[string]string
+	URLKeysMap   map[string]string
 }
 
-func NewStorage() *Store {
-	store := new(Store)
-	store.Store.AliasKeysMap = make(map[string]string)
-	store.Store.FullURLKeysMap = make(map[string]string)
-	store.Mu = sync.Mutex{}
-	return store
+type Storage struct {
+	Mu            sync.Mutex
+	MemoryStorage MemoryStorage
 }
 
-func (store *Store) SaveJSONtoFS(path string) {
-	store.Mu.Lock()
-	defer store.Mu.Unlock()
+func NewMemoryStorage() *Storage {
+	storage := new(Storage)
+	storage.MemoryStorage.AliasKeysMap = make(map[string]string)
+	storage.MemoryStorage.URLKeysMap = make(map[string]string)
+	storage.Mu = sync.Mutex{}
+	return storage
+}
+
+func (storage *Storage) AddToMemoryStore(url, alias string) {
+	storage.Mu.Lock()
+	defer storage.Mu.Unlock()
+	storage.MemoryStorage.AliasKeysMap[alias] = url
+	storage.MemoryStorage.URLKeysMap[url] = alias
+}
+
+func (storage *Storage) GetURL(alias string) (url string, found bool) {
+	storage.Mu.Lock()
+	defer storage.Mu.Unlock()
+	url, found = storage.MemoryStorage.AliasKeysMap[alias]
+	return url, found
+}
+
+func (storage *Storage) GetAlias(url string) (alias string, found bool) {
+	storage.Mu.Lock()
+	defer storage.Mu.Unlock()
+	alias, found = storage.MemoryStorage.URLKeysMap[url]
+	return alias, found
+}
+
+func (storage *Storage) SaveJSONtoFS(path string) {
+	storage.Mu.Lock()
+	defer storage.Mu.Unlock()
 	if path == "" {
 		return
 	}
@@ -36,7 +65,7 @@ func (store *Store) SaveJSONtoFS(path string) {
 		panic(err)
 	}
 	defer file.Close()
-	jsonData, err := json.MarshalIndent(store.Store.AliasKeysMap, "", "	")
+	jsonData, err := json.MarshalIndent(storage.MemoryStorage.AliasKeysMap, "", "	")
 	if err != nil {
 		panic(err)
 	}
@@ -46,9 +75,9 @@ func (store *Store) SaveJSONtoFS(path string) {
 	}
 }
 
-func (store *Store) LoadJSONfromFS(path string) error {
-	store.Mu.Lock()
-	defer store.Mu.Unlock()
+func (storage *Storage) LoadJSONfromFS(path string) error {
+	storage.Mu.Lock()
+	defer storage.Mu.Unlock()
 	if path == "" {
 		return nil
 	}
@@ -59,12 +88,12 @@ func (store *Store) LoadJSONfromFS(path string) error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, &store.Store.AliasKeysMap)
+	err = json.Unmarshal(data, &storage.MemoryStorage.AliasKeysMap)
 	if err != nil {
 		return err
 	}
-	for k, v := range store.Store.AliasKeysMap {
-		store.Store.FullURLKeysMap[v] = k
+	for k, v := range storage.MemoryStorage.AliasKeysMap {
+		storage.MemoryStorage.URLKeysMap[v] = k
 	}
 
 	return nil

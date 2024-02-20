@@ -6,18 +6,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
 type GetHandler struct {
 	BaseHandler
 }
 
-func NewGetHandler(store *storage.Store, config config.Config) *GetHandler {
+func NewGetHandler(app *config.App) *GetHandler {
 	return &GetHandler{
 		BaseHandler: BaseHandler{
-			store:  store,
-			config: config,
+			app: app,
 		},
 	}
 }
@@ -34,8 +32,8 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if fullURL, ok := handler.store.Store.AliasKeysMap[alias]; ok {
-		w.Header().Add("Location", fullURL)
+	if URL, ok := handler.app.Storage.GetURL(alias); ok {
+		w.Header().Add("Location", URL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
 	} else {
