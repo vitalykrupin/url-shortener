@@ -15,12 +15,14 @@ func Route(app *app.App, conf *config.Config) {
 	router := chi.NewRouter()
 	router.Use(middleware.Logging)
 	router.Use(middleware.GzipMiddleware)
+	router.Use(middleware.JwtAuthorization)
 
 	router.Handle(`/{id}`, handlers.NewGetHandler(app))
 	router.Handle(`/`, handlers.NewPostHandler(app))
 	router.Method(http.MethodPost, `/api/shorten`, handlers.NewPostHandler(app))
 	router.Method(http.MethodPost, `/api/shorten/batch`, handlers.NewPostBatchHandler(app))
 	router.Method(http.MethodGet, `/ping`, handlers.NewGetPingHandler(app))
+	router.Method(http.MethodGet, `/api/user/urls`, handlers.NewGetAllUserURLs(app))
 
 	errListen := http.ListenAndServe(conf.ServerAddress, router)
 	if errListen != nil {

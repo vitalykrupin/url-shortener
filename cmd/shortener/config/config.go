@@ -11,7 +11,7 @@ import (
 const (
 	defaultServerAddress   = "localhost:8080"
 	defaultResponseAddress = "http://localhost:8080"
-	defaultDBDSN           = "postgres://postgres:pwd@localhost:5432/postgres?sslmode=disable"
+	defaultDBDSN           = ""
 )
 
 type Config struct {
