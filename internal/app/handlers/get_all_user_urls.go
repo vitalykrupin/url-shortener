@@ -35,7 +35,7 @@ func (handler *GetAllUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	userUUIDAny := req.Context().Value(middleware.UserIDKey)
+	userUUIDAny := ctx.Value(middleware.UserIDKey)
 	if userUUIDAny == nil || userUUIDAny == "" {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -64,5 +64,4 @@ func (handler *GetAllUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(result)
-
 }

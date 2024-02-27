@@ -34,7 +34,6 @@ func NewPostHandler(app *app.App) *PostHandler {
 func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), ctxTimeout)
 	defer cancel()
-	defer req.Body.Close()
 
 	if req.Method != http.MethodPost {
 		log.Println("Only POST requests are allowed!")
@@ -43,6 +42,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	}
 	URL, err := parseBody(req)
 	if err != nil {
+		log.Println("Can not parse body", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -50,6 +50,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	if alias, err := handler.app.Storage.GetAlias(ctx, storage.OriginalURL(URL)); err == nil {
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+string(alias), true)
 		if err != nil {
+			log.Println("Can not print response", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -59,11 +60,11 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 			storage.Alias(alias): storage.OriginalURL(URL),
 		}
 		if err := handler.app.Storage.Add(ctx, batch); err != nil {
-			log.Println("Can not add note to database")
-			return
+			log.Println("Can not add note to database", err)
 		}
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias, false)
 		if err != nil {
+			log.Println("Can not print response", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -71,6 +72,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 }
 
 func parseBody(req *http.Request) (string, error) {
+	defer req.Body.Close()
 	if req.Header.Get("Content-Type") == "application/json" {
 		jsonReq := new(postJSONRequest)
 		err := json.NewDecoder(req.Body).Decode(jsonReq)
@@ -80,7 +82,12 @@ func parseBody(req *http.Request) (string, error) {
 		return jsonReq.URL, nil
 	}
 	body, err := io.ReadAll(req.Body)
-	return string(body), err
+	stringBody := string(body)
+	if stringBody == "" {
+		log.Println("No body in request")
+		return "", fmt.Errorf("no body in request")
+	}
+	return stringBody, err
 }
 
 func printResponse(w http.ResponseWriter, req *http.Request, alias string, allreadyAdded bool) error {
@@ -99,7 +106,6 @@ func printResponse(w http.ResponseWriter, req *http.Request, alias string, allre
 	} else {
 		w.WriteHeader(http.StatusCreated)
 	}
-	w.WriteHeader(http.StatusCreated)
 	fmt.Fprint(w, alias)
 	return nil
 }

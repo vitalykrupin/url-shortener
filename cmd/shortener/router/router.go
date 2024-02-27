@@ -18,11 +18,14 @@ func Route(app *app.App, conf *config.Config) {
 	router.Use(middleware.JwtAuthorization)
 
 	router.Handle(`/{id}`, handlers.NewGetHandler(app))
+	router.Method(http.MethodGet, `/ping`, handlers.NewGetPingHandler(app))
+	router.Method(http.MethodGet, `/api/user/urls`, handlers.NewGetAllUserURLs(app))
+
 	router.Handle(`/`, handlers.NewPostHandler(app))
 	router.Method(http.MethodPost, `/api/shorten`, handlers.NewPostHandler(app))
 	router.Method(http.MethodPost, `/api/shorten/batch`, handlers.NewPostBatchHandler(app))
-	router.Method(http.MethodGet, `/ping`, handlers.NewGetPingHandler(app))
-	router.Method(http.MethodGet, `/api/user/urls`, handlers.NewGetAllUserURLs(app))
+
+	router.Method(http.MethodDelete, `/api/user/urls`, handlers.NewDeleteHandler(app))
 
 	errListen := http.ListenAndServe(conf.ServerAddress, router)
 	if errListen != nil {

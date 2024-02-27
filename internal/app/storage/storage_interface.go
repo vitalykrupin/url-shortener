@@ -7,6 +7,7 @@ type Storage interface {
 	GetURL(ctx context.Context, alias Alias) (url OriginalURL, err error)
 	GetAlias(ctx context.Context, url OriginalURL) (alias Alias, err error)
 	GetUserURLs(ctx context.Context, userID string) (aliasKeysMap *aliasKeysMap, err error)
+	DeleteUserURLs(ctx context.Context, userID string, urls []string) error
 	CloseStorage(ctx context.Context) error
 	PingStorage(ctx context.Context) error
 }

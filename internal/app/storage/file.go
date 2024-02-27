@@ -114,6 +114,10 @@ func (f *FileStorage) GetAlias(ctx context.Context, url OriginalURL) (alias Alia
 	return f.SyncMemoryStorage.GetAlias(url)
 }
 
+func (f *FileStorage) DeleteUserURLs(ctx context.Context, userID string, urls []string) error {
+	return fmt.Errorf("can not delete user urls from file storage")
+}
+
 func (f *FileStorage) CloseStorage(ctx context.Context) error {
 	if f.file != nil {
 		return f.file.Close()
