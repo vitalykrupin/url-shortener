@@ -17,7 +17,7 @@ type ShortenerClaims struct {
 }
 
 const (
-	secretKey string    = "secret_key"
+	secretKey string    = "Aij)&_fJk$LmO_oH13524("
 	UserIDKey CookieKey = "UserId"
 	tokenLT             = time.Hour * 24
 )

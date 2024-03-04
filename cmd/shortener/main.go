@@ -7,6 +7,7 @@ import (
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/router"
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
+	"github.com/vitalykrupin/url-shortener.git/internal/app/services/deleter"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
@@ -25,7 +26,9 @@ func run() error {
 		store = storage.NewFileStorage(conf)
 	}
 
-	appInstance := app.NewApp(conf, store)
+	deleteService := ds.NewDeleteService()
+
+	appInstance := app.NewApp(conf, store, deleteService)
 
 	router.Route(appInstance, conf)
 

@@ -32,12 +32,12 @@ func NewFileStorage(cfg *config.Config) Storage {
 	if err != nil {
 		log.Fatal("Can not create file")
 	}
-	fs := &FileStorage{SyncMemoryStorage: syncMem, file: file}
+	fs := FileStorage{SyncMemoryStorage: syncMem, file: file}
 	err = fs.LoadJSONfromFS()
 	if err != nil {
 		log.Fatal("Can not load JSON from file")
 	}
-	return fs
+	return &fs
 }
 
 func (f *FileStorage) LoadJSONfromFS() error {
@@ -106,7 +106,7 @@ func (f *FileStorage) GetURL(ctx context.Context, alias Alias) (url OriginalURL,
 	return f.SyncMemoryStorage.GetURL(alias)
 }
 
-func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) (aliasKeysMap *aliasKeysMap, err error) {
+func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) (aliasKeysMap AliasKeysMap, err error) {
 	return nil, fmt.Errorf("can not get user urls from file storage")
 }
 

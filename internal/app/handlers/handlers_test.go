@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
+	deleteService "github.com/vitalykrupin/url-shortener.git/internal/app/services/deleter"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
 )
@@ -37,7 +38,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	}
 	store.Add(context.Background(), batch)
 
-	newApp := app.NewApp(conf, store)
+	newApp := app.NewApp(conf, store, deleteService.NewDeleteService())
 
 	tests := []struct {
 		name string
@@ -100,7 +101,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
 	store := storage.NewFileStorage(conf)
-	newApp := app.NewApp(conf, store)
+	newApp := app.NewApp(conf, store, deleteService.NewDeleteService())
 
 	tests := []struct {
 		name string
@@ -149,7 +150,7 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
 	store := storage.NewFileStorage(conf)
-	newApp := app.NewApp(conf, store)
+	newApp := app.NewApp(conf, store, deleteService.NewDeleteService())
 
 	tests := []struct {
 		name string

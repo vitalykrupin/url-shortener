@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -46,17 +45,23 @@ func (handler *NewDeleteUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Req
 		return
 	}
 
-	ctx := context.Background()
+	out := handler.app.DeleteService.Add(urls)
+	for s := range out {
+		handler.app.Storage.DeleteUserURLs(req.Context(), userUUID, s)
+	}
+	// go func(ctx context.Context, in ...<-chan []string) {
+	// 	handler.app.Storage.DeleteUserURLs(ctx, userUUID, urls)
+	// }(req.Context(), out)
 
-	go func(ctx context.Context) {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			handler.app.Storage.DeleteUserURLs(ctx, userUUID, urls)
-			return
-		}
-	}(ctx)
+	// go func(ctx context.Context) {
+	// 	select {
+	// 	case <-ctx.Done():
+	// 		return
+	// 	default:
+	// 		handler.app.Storage.DeleteUserURLs(ctx, userUUID, urls)
+	// 		return
+	// 	}
+	// }(ctx)
 
 	w.WriteHeader(http.StatusAccepted)
 }

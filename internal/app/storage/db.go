@@ -57,7 +57,12 @@ func (d *DB) Add(ctx context.Context, batch map[Alias]OriginalURL) error {
 		})
 	}
 	results := d.pool.SendBatch(ctx, &b)
-	defer results.Close()
+	defer func(results pgx.BatchResults) {
+		err := results.Close()
+		if err != nil {
+			log.Println("Can not close results")
+		}
+	}(results)
 
 	for range batch {
 		_, err := results.Exec()
@@ -93,8 +98,8 @@ func (d *DB) GetURL(ctx context.Context, alias Alias) (OriginalURL, error) {
 	return url, nil
 }
 
-func (d *DB) GetUserURLs(ctx context.Context, userID string) (*aliasKeysMap, error) {
-	result := aliasKeysMap{}
+func (d *DB) GetUserURLs(ctx context.Context, userID string) (aliasKeysMap AliasKeysMap, err error) {
+	result := AliasKeysMap{}
 	rows, err := d.pool.Query(ctx, `SELECT alias, url FROM urls WHERE user_id = $1;`, userID)
 	if err != nil {
 		log.Println("Can not get all user URLs from database")
@@ -109,7 +114,7 @@ func (d *DB) GetUserURLs(ctx context.Context, userID string) (*aliasKeysMap, err
 		}
 		result[Alias(alias)] = OriginalURL(originalURL)
 	}
-	return &result, nil
+	return result, nil
 }
 
 func (d *DB) DeleteUserURLs(ctx context.Context, userID string, aliases []string) error {

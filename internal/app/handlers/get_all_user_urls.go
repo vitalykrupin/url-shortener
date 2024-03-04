@@ -47,14 +47,14 @@ func (handler *GetAllUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	if len(*urls) == 0 {
+	if len(urls) == 0 {
 		log.Println(userUUIDAny)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	result := make([]getUserURLsResponseUnit, 0, len(*urls))
-	for alias, originalURL := range *urls {
+	result := make([]getUserURLsResponseUnit, 0, len(urls))
+	for alias, originalURL := range urls {
 		result = append(result, getUserURLsResponseUnit{
 			Alias:       handler.app.Config.ResponseAddress + "/" + string(alias),
 			OriginalURL: string(originalURL),
