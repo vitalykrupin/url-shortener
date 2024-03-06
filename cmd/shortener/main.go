@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
@@ -18,19 +17,21 @@ func main() {
 }
 
 func run() error {
-	conf := &config.Config{}
-	conf.InitConfig()
+	conf := config.NewConfig()
+	conf.ParseFlags()
 
-	store, err := storage.NewDB(context.Background(), conf)
+	var err error
+	storage.Store, err = storage.NewStorage(conf)
 	if err != nil {
-		store = storage.NewFileStorage(conf)
+		log.Println("Can not create storage", err)
+		return err
 	}
 
-	deleteService := ds.NewDeleteService()
+	ds.DelService = ds.NewDeleteService()
 
-	appInstance := app.NewApp(conf, store, deleteService)
+	appInstance := app.NewApp(storage.Store, conf)
 
-	router.Route(appInstance, conf)
+	router.Route(appInstance)
 
 	return nil
 }

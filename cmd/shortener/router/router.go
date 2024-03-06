@@ -5,13 +5,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/handlers"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/middleware"
 )
 
-func Route(app *app.App, conf *config.Config) {
+func Route(app *app.App) {
 	router := chi.NewRouter()
 	router.Use(middleware.Logging)
 	router.Use(middleware.GzipMiddleware)
@@ -27,7 +26,7 @@ func Route(app *app.App, conf *config.Config) {
 
 	router.Method(http.MethodDelete, `/api/user/urls`, handlers.NewDeleteHandler(app))
 
-	errListen := http.ListenAndServe(conf.ServerAddress, router)
+	errListen := http.ListenAndServe(app.Config.ServerAddress, router)
 	if errListen != nil {
 		log.Fatalf("ListenAndServe returns error: %v", errListen)
 	}

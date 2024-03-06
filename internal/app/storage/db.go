@@ -9,7 +9,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/middleware"
 )
 
@@ -19,12 +18,9 @@ type DB struct {
 
 var ErrDeleted = errors.New(`url deleted`)
 
-func NewDB(ctx context.Context, cfg *config.Config) (Storage, error) {
-	if cfg.DBDSN == "" {
-		log.Println("No DBDSN provided")
-		return nil, fmt.Errorf("no DBDSN provided")
-	}
-	conn, err := pgxpool.New(ctx, cfg.DBDSN)
+func NewDB(DBDSN string) (*DB, error) {
+	ctx := context.Background()
+	conn, err := pgxpool.New(ctx, DBDSN)
 	if err != nil {
 		log.Println("Can not connect to database")
 		return nil, err

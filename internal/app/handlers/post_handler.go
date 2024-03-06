@@ -47,7 +47,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	if alias, err := handler.app.Storage.GetAlias(ctx, storage.OriginalURL(URL)); err == nil {
+	if alias, err := storage.Store.GetAlias(ctx, storage.OriginalURL(URL)); err == nil {
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+string(alias), true)
 		if err != nil {
 			log.Println("Can not print response", err)
@@ -59,7 +59,7 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		batch := map[storage.Alias]storage.OriginalURL{
 			storage.Alias(alias): storage.OriginalURL(URL),
 		}
-		if err := handler.app.Storage.Add(ctx, batch); err != nil {
+		if err := storage.Store.Add(ctx, batch); err != nil {
 			log.Println("Can not add note to database", err)
 		}
 		err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+alias, false)

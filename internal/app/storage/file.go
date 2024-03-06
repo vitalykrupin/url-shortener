@@ -8,8 +8,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 )
 
 type JSONFS struct {
@@ -22,13 +20,13 @@ type FileStorage struct {
 	file              *os.File
 }
 
-func NewFileStorage(cfg *config.Config) Storage {
-	if cfg.FileStorePath == "" {
-		return nil
+func NewFileStorage(FileStoragePath string) (*FileStorage, error) {
+	if FileStoragePath == "" {
+		return nil, fmt.Errorf("no FileStoragePath provided")
 	}
 	syncMem := NewMemoryStorage()
 
-	file, err := os.Create(cfg.FileStorePath)
+	file, err := os.Create(FileStoragePath)
 	if err != nil {
 		log.Fatal("Can not create file")
 	}
@@ -37,7 +35,7 @@ func NewFileStorage(cfg *config.Config) Storage {
 	if err != nil {
 		log.Fatal("Can not load JSON from file")
 	}
-	return &fs
+	return &fs, nil
 }
 
 func (f *FileStorage) LoadJSONfromFS() error {

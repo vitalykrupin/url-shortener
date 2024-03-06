@@ -1,8 +1,13 @@
 package ds
 
 import (
+	"context"
 	"sync"
+
+	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
+
+var DelService *DeleteService
 
 type DeleteService struct {
 	wg   *sync.WaitGroup
@@ -16,15 +21,15 @@ func NewDeleteService() *DeleteService {
 	}
 }
 
-func (ds *DeleteService) Add(urls []string) <-chan []string {
+func (ds *DeleteService) Add(urls []string, userID string) {
 	gen := ds.generator(urls)
-	return ds.merge(gen)
+	out := ds.merge(gen)
 
-	//go func() {
-	//	for url := range out {
-	//		ds.delete(url, userID)
-	//	}
-	//}()
+	go func() {
+		for urls := range out {
+			storage.Store.DeleteUserURLs(context.Background(), userID, urls)
+		}
+	}()
 }
 
 func (ds *DeleteService) generator(urls []string) chan []string {

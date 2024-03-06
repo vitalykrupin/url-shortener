@@ -6,9 +6,6 @@ import (
 	"sync"
 )
 
-type Alias string
-type OriginalURL string
-
 type AliasKeysMap map[Alias]OriginalURL
 type urlKeysMap map[OriginalURL]Alias
 

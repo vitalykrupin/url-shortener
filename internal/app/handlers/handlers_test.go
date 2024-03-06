@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	deleteService "github.com/vitalykrupin/url-shortener.git/internal/app/services/deleter"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
 )
@@ -28,18 +27,20 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 		location string
 	}
 
-	conf := &config.Config{}
+	conf := config.NewConfig()
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
-	store := storage.NewFileStorage(conf)
-	var batch = map[storage.Alias]storage.OriginalURL{
+	var err error
+	storage.Store, err = storage.NewStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	batch := map[storage.Alias]storage.OriginalURL{
 		"abcABC": "https://yandex.ru",
 	}
-	store.Add(context.Background(), batch)
-
-	newApp := app.NewApp(conf, store, deleteService.NewDeleteService())
-
+	storage.Store.Add(context.Background(), batch)
+	newApp := app.NewApp(storage.Store, conf)
 	tests := []struct {
 		name string
 		args args
@@ -96,12 +97,17 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 		code int
 	}
 
-	conf := &config.Config{}
+	conf := config.NewConfig()
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
-	store := storage.NewFileStorage(conf)
-	newApp := app.NewApp(conf, store, deleteService.NewDeleteService())
+	var err error
+	storage.Store, err = storage.NewStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	newApp := app.NewApp(storage.Store, conf)
 
 	tests := []struct {
 		name string
@@ -145,12 +151,16 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 		code int
 	}
 
-	conf := &config.Config{}
+	conf := config.NewConfig()
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
-	store := storage.NewFileStorage(conf)
-	newApp := app.NewApp(conf, store, deleteService.NewDeleteService())
+	var err error
+	storage.Store, err = storage.NewStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newApp := app.NewApp(storage.Store, conf)
 
 	tests := []struct {
 		name string

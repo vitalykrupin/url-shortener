@@ -1,6 +1,13 @@
 package storage
 
-import "context"
+import (
+	"context"
+
+	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+)
+
+type Alias string
+type OriginalURL string
 
 type Storage interface {
 	Add(ctx context.Context, batch map[Alias]OriginalURL) error
@@ -10,4 +17,14 @@ type Storage interface {
 	DeleteUserURLs(ctx context.Context, userID string, urls []string) error
 	CloseStorage(ctx context.Context) error
 	PingStorage(ctx context.Context) error
+}
+
+var Store Storage
+
+func NewStorage(conf *config.Config) (Storage, error) {
+	if conf.DBDSN != "" {
+		return NewDB(conf.DBDSN)
+	} else {
+		return NewFileStorage(conf.FileStorePath)
+	}
 }

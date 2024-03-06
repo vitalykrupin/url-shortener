@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
+	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
 type GetPingHandler struct {
@@ -22,8 +23,8 @@ func (handler *GetPingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	ctx, cancel := context.WithTimeout(req.Context(), ctxTimeout)
 	defer cancel()
 
-	if handler.app.Storage != nil {
-		err := handler.app.Storage.PingStorage(ctx)
+	if storage.Store != nil {
+		err := storage.Store.PingStorage(ctx)
 		if err != nil {
 			log.Println("Can not connect to database")
 			return
