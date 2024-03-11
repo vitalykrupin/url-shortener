@@ -8,7 +8,6 @@ import (
 
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/middleware"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/services/deleter"
 )
 
 type NewDeleteUserURLs struct {
@@ -46,7 +45,7 @@ func (handler *NewDeleteUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Req
 		return
 	}
 
-	ds.DelService.Add(urls, userUUID)
+	handler.app.DeleteService.Add(userUUID, urls)
 
 	w.WriteHeader(http.StatusAccepted)
 }

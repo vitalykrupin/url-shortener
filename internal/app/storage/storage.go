@@ -19,8 +19,6 @@ type Storage interface {
 	PingStorage(ctx context.Context) error
 }
 
-var Store Storage
-
 func NewStorage(conf *config.Config) (Storage, error) {
 	if conf.DBDSN != "" {
 		return NewDB(conf.DBDSN)

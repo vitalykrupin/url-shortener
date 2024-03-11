@@ -14,13 +14,6 @@ const (
 	defaultDBDSN           = ""
 )
 
-type ConfigType struct {
-	ServerAddress   string `env:"SERVER_ADDRESS"`
-	ResponseAddress string `env:"BASE_URL"`
-	FileStorePath   string `env:"FILE_STORAGE_PATH"`
-	DBDSN           string `env:"DATABASE_DSN"`
-}
-
 type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS"`
 	ResponseAddress string `env:"BASE_URL"`

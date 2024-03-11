@@ -6,7 +6,7 @@ import (
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/router"
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/services/deleter"
+	"github.com/vitalykrupin/url-shortener.git/internal/app/services/ds"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
@@ -21,17 +21,17 @@ func run() error {
 	conf.ParseFlags()
 
 	var err error
-	storage.Store, err = storage.NewStorage(conf)
+	store, err := storage.NewStorage(conf)
 	if err != nil {
 		log.Println("Can not create storage", err)
 		return err
 	}
 
-	ds.DelService = ds.NewDeleteService()
+	ds := ds.NewDeleteService(store)
+	ds.Start()
+	defer ds.Stop()
 
-	appInstance := app.NewApp(storage.Store, conf)
-
-	router.Route(appInstance)
+	router.Route(app.NewApp(store, conf, ds))
 
 	return nil
 }

@@ -32,15 +32,15 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
 	var err error
-	storage.Store, err = storage.NewStorage(conf)
+	store, err := storage.NewStorage(conf)
 	if err != nil {
 		t.Fatal(err)
 	}
 	batch := map[storage.Alias]storage.OriginalURL{
 		"abcABC": "https://yandex.ru",
 	}
-	storage.Store.Add(context.Background(), batch)
-	newApp := app.NewApp(storage.Store, conf)
+	store.Add(context.Background(), batch)
+	newApp := app.NewApp(store, conf, nil)
 	tests := []struct {
 		name string
 		args args
@@ -102,12 +102,12 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
 	var err error
-	storage.Store, err = storage.NewStorage(conf)
+	store, err := storage.NewStorage(conf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	newApp := app.NewApp(storage.Store, conf)
+	newApp := app.NewApp(store, conf, nil)
 
 	tests := []struct {
 		name string
@@ -156,11 +156,11 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = "/tmp/testfile.json"
 	var err error
-	storage.Store, err = storage.NewStorage(conf)
+	store, err := storage.NewStorage(conf)
 	if err != nil {
 		t.Fatal(err)
 	}
-	newApp := app.NewApp(storage.Store, conf)
+	newApp := app.NewApp(store, conf, nil)
 
 	tests := []struct {
 		name string

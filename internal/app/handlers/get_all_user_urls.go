@@ -8,7 +8,6 @@ import (
 
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/middleware"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
 type GetAllUserURLs struct {
@@ -42,7 +41,7 @@ func (handler *GetAllUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		return
 	}
 	userUUID := userUUIDAny.(string)
-	urls, err := storage.Store.GetUserURLs(ctx, userUUID)
+	urls, err := handler.app.Store.GetUserURLs(ctx, userUUID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

@@ -56,7 +56,7 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	batch := make(map[storage.Alias]storage.OriginalURL)
 	for _, v := range jsonReq {
-		if alias, err := storage.Store.GetAlias(ctx, storage.OriginalURL(v.URL)); err == nil {
+		if alias, err := handler.app.Store.GetAlias(ctx, storage.OriginalURL(v.URL)); err == nil {
 			err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+string(alias), true)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
@@ -68,7 +68,7 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 			resp = append(resp, postBatchResponseUnit{CorrelationID: v.CorrelationID, Alias: handler.app.Config.ResponseAddress + "/" + alias})
 		}
 	}
-	if err := storage.Store.Add(ctx, batch); err != nil {
+	if err := handler.app.Store.Add(ctx, batch); err != nil {
 		log.Println("Can not add note to database")
 		return
 	}
