@@ -10,6 +10,8 @@ import (
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
 
+const DeleteWorkers = 10
+
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
@@ -28,7 +30,7 @@ func run() error {
 	}
 
 	ds := ds.NewDeleteService(store)
-	ds.Start()
+	ds.Start(DeleteWorkers)
 	defer ds.Stop()
 
 	router.Route(app.NewApp(store, conf, ds))

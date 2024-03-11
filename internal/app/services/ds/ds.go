@@ -23,9 +23,17 @@ func NewDeleteService(store storage.Storage) *DeleteService {
 	}
 }
 
-func (ds *DeleteService) Start() {
+func (ds *DeleteService) Start(workers int) {
+	result := make(chan payload)
+	for w := 1; w <= workers; w++ {
+		go func() {
+			for p := range ds.input {
+				result <- p
+			}
+		}()
+	}
 	go func() {
-		for p := range ds.input {
+		for p := range result {
 			ds.store.DeleteUserURLs(context.Background(), p.userID, p.urls)
 		}
 	}()
