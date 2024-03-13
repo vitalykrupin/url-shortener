@@ -1,14 +1,16 @@
 package main
 
 import (
-	"context"
 	"log"
 
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/router"
 	"github.com/vitalykrupin/url-shortener.git/internal/app"
+	"github.com/vitalykrupin/url-shortener.git/internal/app/services/ds"
 	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
 )
+
+const DeleteWorkers = 10
 
 func main() {
 	if err := run(); err != nil {
@@ -17,17 +19,21 @@ func main() {
 }
 
 func run() error {
-	conf := &config.Config{}
-	conf.InitConfig()
+	conf := config.NewConfig()
+	conf.ParseFlags()
 
-	store, err := storage.NewDB(context.Background(), conf)
+	var err error
+	store, err := storage.NewStorage(conf)
 	if err != nil {
-		store = storage.NewFileStorage(conf)
+		log.Println("Can not create storage", err)
+		return err
 	}
 
-	appInstance := app.NewApp(conf, store)
+	ds := ds.NewDeleteService(store)
+	ds.Start(DeleteWorkers)
+	defer ds.Stop()
 
-	router.Route(appInstance, conf)
+	router.Route(app.NewApp(store, conf, ds))
 
 	return nil
 }

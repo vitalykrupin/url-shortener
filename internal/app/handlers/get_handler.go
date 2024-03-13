@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 
@@ -35,7 +36,11 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if URL, err := handler.app.Storage.GetURL(ctx, storage.Alias(alias)); err != nil {
+	if URL, err := handler.app.Store.GetURL(ctx, storage.Alias(alias)); err != nil {
+		if errors.Is(err, storage.ErrDeleted) {
+			w.WriteHeader(http.StatusGone)
+			return
+		}
 		log.Println("URL by alias " + alias + " is not exists")
 		w.WriteHeader(http.StatusBadRequest)
 		return

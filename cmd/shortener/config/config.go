@@ -21,38 +21,36 @@ type Config struct {
 	DBDSN           string `env:"DATABASE_DSN"`
 }
 
-func (conf *Config) InitConfig() {
-	conf.ServerAddress = defaultServerAddress
-	conf.ResponseAddress = defaultResponseAddress
-	conf.DBDSN = defaultDBDSN
-	conf.FileStorePath = os.TempDir() + "short-url-db.json"
-	conf.parseFlags()
-	conf.parseEnv()
-}
-
-func (conf *Config) parseEnv() {
-	err := env.Parse(conf)
-	if err != nil {
-		fmt.Println("Config is not available", err)
+func NewConfig() *Config {
+	return &Config{
+		ServerAddress:   defaultServerAddress,
+		ResponseAddress: defaultResponseAddress,
+		FileStorePath:   os.TempDir() + "short-url-db.json",
+		DBDSN:           defaultDBDSN,
 	}
 }
 
-func (conf *Config) parseFlags() {
+func (c *Config) ParseFlags() {
 	flag.Func("a", "example: '-a localhost:8080'", func(addr string) error {
-		conf.ServerAddress = addr
+		c.ServerAddress = addr
 		return nil
 	})
 	flag.Func("b", "example: '-b http://localhost:8000'", func(addr string) error {
-		conf.ResponseAddress = addr
+		c.ResponseAddress = addr
 		return nil
 	})
 	flag.Func("f", "example: '-f /tmp/testfile.json'", func(path string) error {
-		conf.FileStorePath = path
+		c.FileStorePath = path
 		return nil
 	})
 	flag.Func("d", "example: '-d postgres://postgres:pwd@localhost:5432/postgres?sslmode=disable'", func(dbAddr string) error {
-		conf.DBDSN = dbAddr
+		c.DBDSN = dbAddr
 		return nil
 	})
 	flag.Parse()
+
+	err := env.Parse(c)
+	if err != nil {
+		fmt.Println("Config is not available", err)
+	}
 }

@@ -35,26 +35,26 @@ func (handler *GetAllUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	userUUIDAny := req.Context().Value(middleware.UserIDKey)
+	userUUIDAny := ctx.Value(middleware.UserIDKey)
 	if userUUIDAny == nil || userUUIDAny == "" {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	userUUID := userUUIDAny.(string)
-	urls, err := handler.app.Storage.GetUserURLs(ctx, userUUID)
+	urls, err := handler.app.Store.GetUserURLs(ctx, userUUID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if len(*urls) == 0 {
+	if len(urls) == 0 {
 		log.Println(userUUIDAny)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	result := make([]getUserURLsResponseUnit, 0, len(*urls))
-	for alias, originalURL := range *urls {
+	result := make([]getUserURLsResponseUnit, 0, len(urls))
+	for alias, originalURL := range urls {
 		result = append(result, getUserURLsResponseUnit{
 			Alias:       handler.app.Config.ResponseAddress + "/" + string(alias),
 			OriginalURL: string(originalURL),
@@ -64,5 +64,4 @@ func (handler *GetAllUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(result)
-
 }

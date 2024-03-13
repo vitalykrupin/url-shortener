@@ -6,14 +6,11 @@ import (
 	"sync"
 )
 
-type Alias string
-type OriginalURL string
-
-type aliasKeysMap map[Alias]OriginalURL
+type AliasKeysMap map[Alias]OriginalURL
 type urlKeysMap map[OriginalURL]Alias
 
 type MemoryStorage struct {
-	AliasKeysMap aliasKeysMap
+	AliasKeysMap AliasKeysMap
 	URLKeysMap   urlKeysMap
 }
 

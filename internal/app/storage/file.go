@@ -8,8 +8,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
 )
 
 type JSONFS struct {
@@ -22,22 +20,22 @@ type FileStorage struct {
 	file              *os.File
 }
 
-func NewFileStorage(cfg *config.Config) Storage {
-	if cfg.FileStorePath == "" {
-		return nil
+func NewFileStorage(FileStoragePath string) (*FileStorage, error) {
+	if FileStoragePath == "" {
+		return nil, fmt.Errorf("no FileStoragePath provided")
 	}
 	syncMem := NewMemoryStorage()
 
-	file, err := os.Create(cfg.FileStorePath)
+	file, err := os.Create(FileStoragePath)
 	if err != nil {
 		log.Fatal("Can not create file")
 	}
-	fs := &FileStorage{SyncMemoryStorage: syncMem, file: file}
+	fs := FileStorage{SyncMemoryStorage: syncMem, file: file}
 	err = fs.LoadJSONfromFS()
 	if err != nil {
 		log.Fatal("Can not load JSON from file")
 	}
-	return fs
+	return &fs, nil
 }
 
 func (f *FileStorage) LoadJSONfromFS() error {
@@ -106,12 +104,16 @@ func (f *FileStorage) GetURL(ctx context.Context, alias Alias) (url OriginalURL,
 	return f.SyncMemoryStorage.GetURL(alias)
 }
 
-func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) (aliasKeysMap *aliasKeysMap, err error) {
+func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) (aliasKeysMap AliasKeysMap, err error) {
 	return nil, fmt.Errorf("can not get user urls from file storage")
 }
 
 func (f *FileStorage) GetAlias(ctx context.Context, url OriginalURL) (alias Alias, err error) {
 	return f.SyncMemoryStorage.GetAlias(url)
+}
+
+func (f *FileStorage) DeleteUserURLs(ctx context.Context, userID string, urls []string) error {
+	return fmt.Errorf("can not delete user urls from file storage")
 }
 
 func (f *FileStorage) CloseStorage(ctx context.Context) error {
