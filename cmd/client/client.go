@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 )
 
 func main() {
 	endpoint := "http://localhost:8080/"
-	data := url.Values{}
 	fmt.Println("Введите длинный URL")
 	reader := bufio.NewReader(os.Stdin)
 	long, err := reader.ReadString('\n')
@@ -20,9 +18,8 @@ func main() {
 		panic(err)
 	}
 	long = strings.TrimSuffix(long, "\n")
-	data.Set("url", long)
 	client := &http.Client{}
-	request, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(data.Encode()))
+	request, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(long))
 	if err != nil {
 		panic(err)
 	}

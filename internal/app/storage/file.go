@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -103,6 +104,10 @@ func (f *FileStorage) Add(ctx context.Context, batch map[Alias]OriginalURL) erro
 
 func (f *FileStorage) GetURL(ctx context.Context, alias Alias) (url OriginalURL, err error) {
 	return f.SyncMemoryStorage.GetURL(alias)
+}
+
+func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) (aliasKeysMap *aliasKeysMap, err error) {
+	return nil, fmt.Errorf("can not get user urls from file storage")
 }
 
 func (f *FileStorage) GetAlias(ctx context.Context, url OriginalURL) (alias Alias, err error) {

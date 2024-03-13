@@ -20,6 +20,8 @@ require (
 require (
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.3
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.uber.org/zap v1.26.0
