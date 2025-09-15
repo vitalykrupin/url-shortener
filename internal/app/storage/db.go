@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/middleware"
+	"github.com/vitalykrupin/url-shortener/internal/app/middleware"
 )
 
 type DB struct {
@@ -114,8 +113,7 @@ func (d *DB) GetUserURLs(ctx context.Context, userID string) (aliasKeysMap Alias
 }
 
 func (d *DB) DeleteUserURLs(ctx context.Context, userID string, aliases []string) error {
-	a := "{" + strings.Join(aliases, ",") + "}"
-	_, err := d.pool.Exec(ctx, `UPDATE urls SET deleted_flag = TRUE WHERE user_id = $1 AND alias = ANY($2::text[]);`, userID, a)
+	_, err := d.pool.Exec(ctx, `UPDATE urls SET deleted_flag = TRUE WHERE user_id = $1 AND alias = ANY($2);`, userID, aliases)
 	if err != nil {
 		log.Println("Can not delete URL from database", err)
 		return err

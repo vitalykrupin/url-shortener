@@ -6,15 +6,16 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
-	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
+	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener/internal/app"
+	"github.com/vitalykrupin/url-shortener/internal/app/storage"
+	"github.com/vitalykrupin/url-shortener/internal/app/utils"
 )
 
 func TestGetHandler_ServeHTTP(t *testing.T) {
@@ -30,7 +31,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
-	conf.FileStorePath = "/tmp/testfile.json"
+	conf.FileStorePath = filepath.Join(t.TempDir(), "testfile.json")
 	var err error
 	store, err := storage.NewStorage(conf)
 	if err != nil {
@@ -64,7 +65,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 				req: utils.AddChiContext(httptest.NewRequest(http.MethodGet, "/abc", nil), map[string]string{idParam: "abc"}),
 			},
 			want: want{
-				code:     http.StatusBadRequest,
+				code:     http.StatusNotFound,
 				location: "",
 			},
 		},
@@ -76,7 +77,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 			res := tt.args.w.Result()
 			defer res.Body.Close()
 			require.Equal(t, tt.want.code, res.StatusCode)
-			if res.StatusCode != http.StatusBadRequest {
+			if res.StatusCode != http.StatusNotFound {
 				require.Equal(t, tt.want.location, res.Header.Get("Location"))
 				handler.ServeHTTP(tt.args.w, tt.args.req)
 				newResult := tt.args.w.Result()
@@ -100,7 +101,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
-	conf.FileStorePath = "/tmp/testfile.json"
+	conf.FileStorePath = filepath.Join(t.TempDir(), "testfile.json")
 	var err error
 	store, err := storage.NewStorage(conf)
 	if err != nil {
@@ -154,7 +155,7 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
-	conf.FileStorePath = "/tmp/testfile.json"
+	conf.FileStorePath = filepath.Join(t.TempDir(), "testfile.json")
 	var err error
 	store, err := storage.NewStorage(conf)
 	if err != nil {

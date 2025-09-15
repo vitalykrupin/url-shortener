@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -11,19 +12,29 @@ import (
 )
 
 type CookieKey string
+
 type ShortenerClaims struct {
 	jwt.RegisteredClaims
 	UserID string
 }
 
 const (
-	secretKey string    = "Aij)&_fJk$LmO_oH13524("
 	UserIDKey CookieKey = "UserId"
 	tokenLT             = time.Hour * 24
 )
 
+// SetUserID is a helper function for tests to set user ID in context
+func SetUserID(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, UserIDKey, userID)
+}
+
 func JwtAuthorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		secretKey := os.Getenv("JWT_SECRET")
+		if secretKey == "" {
+			secretKey = "insecure-default-change-me"
+		}
+
 		token, err := req.Cookie("Token")
 		if errors.Is(http.ErrNoCookie, err) {
 			newUUID := uuid.NewString()
@@ -40,8 +51,10 @@ func JwtAuthorization(next http.Handler) http.Handler {
 			}
 
 			http.SetCookie(w, &http.Cookie{
-				Name:  "Token",
-				Value: strJwt,
+				Name:     "Token",
+				Value:    strJwt,
+				HttpOnly: true,
+				SameSite: http.SameSiteLaxMode,
 			})
 			if req.RequestURI == "/api/user/urls" {
 				next.ServeHTTP(w, req)

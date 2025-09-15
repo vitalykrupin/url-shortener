@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/caarlos0/env/v10"
 )
@@ -25,7 +26,7 @@ func NewConfig() *Config {
 	return &Config{
 		ServerAddress:   defaultServerAddress,
 		ResponseAddress: defaultResponseAddress,
-		FileStorePath:   os.TempDir() + "short-url-db.json",
+		FileStorePath:   filepath.Join(os.TempDir(), "short-url-db.json"),
 		DBDSN:           defaultDBDSN,
 	}
 }

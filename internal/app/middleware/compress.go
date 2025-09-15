@@ -8,8 +8,10 @@ import (
 )
 
 type compressWriter struct {
-	w  http.ResponseWriter
-	zw *gzip.Writer
+	w             http.ResponseWriter
+	zw            *gzip.Writer
+	statusCode    int
+	headerWritten bool
 }
 
 func newCompressWriter(w http.ResponseWriter) *compressWriter {
@@ -24,12 +26,18 @@ func (c *compressWriter) Header() http.Header {
 }
 
 func (c *compressWriter) Write(p []byte) (int, error) {
+	if c.statusCode >= 300 || c.statusCode == 0 {
+		// For error status codes or before status is set, write directly without compression
+		return c.w.Write(p)
+	}
 	return c.zw.Write(p)
 }
 
 func (c *compressWriter) WriteHeader(statusCode int) {
+	c.statusCode = statusCode
 	if statusCode < 300 {
 		c.w.Header().Set("Content-Encoding", "gzip")
+		c.w.Header().Add("Vary", "Accept-Encoding")
 	}
 	c.w.WriteHeader(statusCode)
 }

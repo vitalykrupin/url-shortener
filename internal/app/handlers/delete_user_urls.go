@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/middleware"
+	"github.com/vitalykrupin/url-shortener/internal/app"
+	"github.com/vitalykrupin/url-shortener/internal/app/middleware"
 )
 
 type NewDeleteUserURLs struct {
@@ -34,18 +34,18 @@ func (handler *NewDeleteUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Req
 	}
 	userUUID := userUUIDAny.(string)
 
-	var urls []string
+	var aliases []string
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Println("Can not read body")
 		return
 	}
-	if err := json.Unmarshal(body, &urls); err != nil {
+	if err := json.Unmarshal(body, &aliases); err != nil {
 		log.Println("Can not unmarshal body")
 		return
 	}
 
-	handler.app.DeleteService.Add(userUUID, urls)
+	handler.app.DeleteService.Add(userUUID, aliases)
 
 	w.WriteHeader(http.StatusAccepted)
 }

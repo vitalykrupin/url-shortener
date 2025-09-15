@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
+	"github.com/vitalykrupin/url-shortener/internal/app"
+	"github.com/vitalykrupin/url-shortener/internal/app/storage"
+	"github.com/vitalykrupin/url-shortener/internal/app/utils"
 )
 
 type postJSONRequest struct {

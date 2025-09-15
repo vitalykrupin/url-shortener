@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 )
@@ -15,6 +15,7 @@ type JSONFS struct {
 	Alias Alias       `json:"alias"`
 	URL   OriginalURL `json:"url"`
 }
+
 type FileStorage struct {
 	SyncMemoryStorage *SyncMemoryStorage
 	file              *os.File
@@ -26,77 +27,68 @@ func NewFileStorage(FileStoragePath string) (*FileStorage, error) {
 	}
 	syncMem := NewMemoryStorage()
 
-	file, err := os.Create(FileStoragePath)
+	file, err := os.OpenFile(FileStoragePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		log.Fatal("Can not create file")
+		return nil, fmt.Errorf("can not open file: %w", err)
 	}
 	fs := FileStorage{SyncMemoryStorage: syncMem, file: file}
-	err = fs.LoadJSONfromFS()
-	if err != nil {
-		log.Fatal("Can not load JSON from file")
+	if err := fs.LoadJSONfromFS(); err != nil && !errors.Is(err, bufio.ErrTooLong) {
+		return nil, fmt.Errorf("can not load JSON from file: %w", err)
 	}
 	return &fs, nil
 }
 
 func (f *FileStorage) LoadJSONfromFS() error {
+	if _, err := f.file.Seek(0, 0); err != nil {
+		return err
+	}
 	scanner := bufio.NewScanner(f.file)
 	data := make(map[Alias]OriginalURL)
 	for scanner.Scan() {
-		urls := JSONFS{}
-		err := json.Unmarshal(scanner.Bytes(), &urls)
-		if err != nil {
+		var urls JSONFS
+		if err := json.Unmarshal(scanner.Bytes(), &urls); err != nil {
 			return err
 		}
 		data[urls.Alias] = urls.URL
 	}
-	err := f.SyncMemoryStorage.Add(data)
-	if err != nil {
-		log.Println("Can not save data to memory")
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	if err := f.SyncMemoryStorage.Add(data); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (f *FileStorage) Add(ctx context.Context, batch map[Alias]OriginalURL) error {
-	err := f.SyncMemoryStorage.Add(batch)
-	if err != nil {
-		log.Println("Can not save data to memory")
+	if err := f.SyncMemoryStorage.Add(batch); err != nil {
 		return err
 	}
 	if f.file == nil {
-		log.Println("Can not save data to file, file is not exists")
-		return nil
+		return errors.New("file is not opened")
 	}
 
 	writter := bufio.NewWriter(f.file)
-	var urls = []JSONFS{}
 	for alias, url := range batch {
-		urls = append(urls, JSONFS{
+		entry := JSONFS{
 			UUID:  strconv.Itoa(len(f.SyncMemoryStorage.MemoryStorage.AliasKeysMap)),
 			Alias: alias,
 			URL:   url,
-		})
+		}
+		data, err := json.Marshal(entry)
+		if err != nil {
+			return err
+		}
+		if _, err := writter.Write(data); err != nil {
+			return err
+		}
+		if err := writter.WriteByte('\n'); err != nil {
+			return err
+		}
 	}
-	data, err := json.Marshal(urls)
-	if err != nil {
-		log.Println("Can not marshal data")
-		return nil
-	}
-	if _, err := writter.Write(data); err != nil {
-		log.Println("Can not write data into file")
-		return nil
-	}
-
-	if err := writter.WriteByte('\n'); err != nil {
-		log.Println("Can not write new line into file")
-		return nil
-	}
-
 	if err := writter.Flush(); err != nil {
-		log.Println("Can not flush data into file")
-		return nil
+		return err
 	}
-
 	return nil
 }
 

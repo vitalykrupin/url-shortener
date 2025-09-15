@@ -3,7 +3,7 @@ package handlers
 import (
 	"time"
 
-	"github.com/vitalykrupin/url-shortener.git/internal/app"
+	"github.com/vitalykrupin/url-shortener/internal/app"
 )
 
 const (

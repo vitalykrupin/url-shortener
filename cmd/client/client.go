@@ -18,16 +18,12 @@ func main() {
 		panic(err)
 	}
 	long = strings.TrimSuffix(long, "\n")
-	client := &http.Client{}
-	request, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(long))
+
+	response, err := sendRequest(endpoint, long)
 	if err != nil {
 		panic(err)
 	}
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	response, err := client.Do(request)
-	if err != nil {
-		panic(err)
-	}
+
 	fmt.Println("Статус-код ", response.Status)
 	defer response.Body.Close()
 	body, err := io.ReadAll(response.Body)
@@ -35,4 +31,15 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(string(body))
+}
+
+// sendRequest sends a POST request to the given endpoint with the provided URL
+func sendRequest(endpoint, url string) (*http.Response, error) {
+	client := &http.Client{}
+	request, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(url))
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	return client.Do(request)
 }

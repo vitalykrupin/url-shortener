@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 )
 
 type Alias string

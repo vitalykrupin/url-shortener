@@ -2,8 +2,9 @@ package ds
 
 import (
 	"context"
+	"sync"
 
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
+	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
 type payload struct {
@@ -11,9 +12,16 @@ type payload struct {
 	urls   []string
 }
 
+type DeleteServiceInterface interface {
+	Add(userID string, urls []string)
+	Start(workers int)
+	Stop()
+}
+
 type DeleteService struct {
 	store storage.Storage
 	input chan payload
+	wg    sync.WaitGroup
 }
 
 func NewDeleteService(store storage.Storage) *DeleteService {
@@ -24,23 +32,20 @@ func NewDeleteService(store storage.Storage) *DeleteService {
 }
 
 func (ds *DeleteService) Start(workers int) {
-	result := make(chan payload)
 	for w := 1; w <= workers; w++ {
+		ds.wg.Add(1)
 		go func() {
+			defer ds.wg.Done()
 			for p := range ds.input {
-				result <- p
+				_ = ds.store.DeleteUserURLs(context.Background(), p.userID, p.urls)
 			}
 		}()
 	}
-	go func() {
-		for p := range result {
-			ds.store.DeleteUserURLs(context.Background(), p.userID, p.urls)
-		}
-	}()
 }
 
 func (ds *DeleteService) Stop() {
 	close(ds.input)
+	ds.wg.Wait()
 }
 
 func (ds *DeleteService) Add(userID string, urls []string) {

@@ -1,17 +1,17 @@
 package app
 
 import (
-	"github.com/vitalykrupin/url-shortener.git/cmd/shortener/config"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/services/ds"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
+	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
+	"github.com/vitalykrupin/url-shortener/internal/app/services/ds"
+	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
 type App struct {
 	Store         storage.Storage
 	Config        *config.Config
-	DeleteService *ds.DeleteService
+	DeleteService ds.DeleteServiceInterface
 }
 
-func NewApp(store storage.Storage, conf *config.Config, deleteService *ds.DeleteService) *App {
+func NewApp(store storage.Storage, conf *config.Config, deleteService ds.DeleteServiceInterface) *App {
 	return &App{Store: store, Config: conf, DeleteService: deleteService}
 }

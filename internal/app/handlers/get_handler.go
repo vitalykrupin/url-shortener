@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
+	"github.com/vitalykrupin/url-shortener/internal/app"
+	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
 type GetHandler struct {
@@ -42,7 +42,7 @@ func (handler *GetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		log.Println("URL by alias " + alias + " is not exists")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	} else {
 		w.Header().Add("Location", string(URL))

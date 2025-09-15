@@ -1,4 +1,4 @@
-module github.com/vitalykrupin/url-shortener.git
+module github.com/vitalykrupin/url-shortener
 
 go 1.21.3
 

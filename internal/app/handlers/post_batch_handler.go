@@ -6,15 +6,16 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/vitalykrupin/url-shortener.git/internal/app"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/storage"
-	"github.com/vitalykrupin/url-shortener.git/internal/app/utils"
+	"github.com/vitalykrupin/url-shortener/internal/app"
+	"github.com/vitalykrupin/url-shortener/internal/app/storage"
+	"github.com/vitalykrupin/url-shortener/internal/app/utils"
 )
 
 type postBatchRequestUnit struct {
 	CorrelationID string `json:"correlation_id"`
 	URL           string `json:"original_url"`
 }
+
 type postBatchResponseUnit struct {
 	CorrelationID string `json:"correlation_id"`
 	Alias         string `json:"short_url"`
@@ -41,6 +42,7 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		return
 	}
 	if req.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -57,20 +59,19 @@ func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 	batch := make(map[storage.Alias]storage.OriginalURL)
 	for _, v := range jsonReq {
 		if alias, err := handler.app.Store.GetAlias(ctx, storage.OriginalURL(v.URL)); err == nil {
-			err := printResponse(w, req, handler.app.Config.ResponseAddress+"/"+string(alias), true)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
+			resp = append(resp, postBatchResponseUnit{CorrelationID: v.CorrelationID, Alias: handler.app.Config.ResponseAddress + "/" + string(alias)})
 		} else {
 			alias := utils.RandomString(aliasSize)
 			batch[storage.Alias(alias)] = storage.OriginalURL(v.URL)
 			resp = append(resp, postBatchResponseUnit{CorrelationID: v.CorrelationID, Alias: handler.app.Config.ResponseAddress + "/" + alias})
 		}
 	}
-	if err := handler.app.Store.Add(ctx, batch); err != nil {
-		log.Println("Can not add note to database")
-		return
+	if len(batch) > 0 {
+		if err := handler.app.Store.Add(ctx, batch); err != nil {
+			log.Println("Can not add note to database")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
