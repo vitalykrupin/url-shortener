@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -37,6 +38,7 @@ func TestDeleteHandler_ValidRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	// Create a mock delete service for testing
 	deleteSvc := &mockDeleteService{}
 	ap := app.NewApp(store, conf, deleteSvc)
@@ -64,6 +66,7 @@ func TestDeleteHandler_NoUserID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	deleteSvc := &mockDeleteService{}
 	ap := app.NewApp(store, conf, deleteSvc)
 
@@ -90,6 +93,7 @@ func TestDeleteHandler_WrongMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	deleteSvc := &mockDeleteService{}
 	ap := app.NewApp(store, conf, deleteSvc)
 
@@ -116,6 +120,7 @@ func TestDeleteHandler_InvalidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	deleteSvc := &mockDeleteService{}
 	ap := app.NewApp(store, conf, deleteSvc)
 

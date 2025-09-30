@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -31,6 +32,7 @@ func TestPostBatchHandler_MixedExistingAndNew(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	ap := app.NewApp(store, conf, nil)
 
 	// Pre-insert existing URL
@@ -71,6 +73,7 @@ func TestPostBatchHandler_AllExisting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	ap := app.NewApp(store, conf, nil)
 
 	// Pre-insert existing URLs
@@ -111,6 +114,7 @@ func TestPostBatchHandler_AllNew(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	ap := app.NewApp(store, conf, nil)
 
 	body, _ := json.Marshal([]batchReq{
@@ -145,6 +149,7 @@ func TestPostBatchHandler_InvalidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", bytes.NewReader([]byte("invalid json")))
@@ -168,6 +173,7 @@ func TestPostBatchHandler_WrongContentType(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	ap := app.NewApp(store, conf, nil)
 
 	body, _ := json.Marshal([]batchReq{{CorrelationID: "1", URL: "https://test"}})
@@ -192,6 +198,7 @@ func TestPostBatchHandler_WrongMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	ap := app.NewApp(store, conf, nil)
 
 	body, _ := json.Marshal([]batchReq{{CorrelationID: "1", URL: "https://test"}})

@@ -37,6 +37,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	batch := map[storage.Alias]storage.OriginalURL{
 		"abcABC": "https://yandex.ru",
 	}
@@ -107,6 +108,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 
 	newApp := app.NewApp(store, conf, nil)
 
@@ -161,6 +163,7 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.CloseStorage(context.Background())
 	newApp := app.NewApp(store, conf, nil)
 
 	tests := []struct {
