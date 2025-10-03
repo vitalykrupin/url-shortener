@@ -31,7 +31,7 @@ func TestNewStorage_FileStorage(t *testing.T) {
 
 	// Clean up
 	ctx := context.Background()
-	store.CloseStorage(ctx)
+	_ = store.CloseStorage(ctx)
 }
 
 func TestNewStorage_DatabaseStorage(t *testing.T) {
@@ -96,7 +96,9 @@ func TestStorage_InterfaceCompliance(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 
 	// Test that the returned storage implements the Storage interface
 	var _ Storage = store
@@ -112,7 +114,9 @@ func TestStorage_FileStorageOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 
 	ctx := context.Background()
 
@@ -168,7 +172,9 @@ func TestStorage_FileStorageUserOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 
 	ctx := context.Background()
 
@@ -195,7 +201,9 @@ func TestStorage_FileStoragePing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 
 	ctx := context.Background()
 
@@ -231,7 +239,7 @@ func TestStorage_FileStoragePersistence(t *testing.T) {
 		t.Fatalf("Expected no error on Add, got %v", err)
 	}
 
-	store1.CloseStorage(ctx)
+	_ = store1.CloseStorage(ctx)
 
 	// Now create a new storage instance and check if data persists
 	conf2 := &config.Config{
@@ -243,7 +251,9 @@ func TestStorage_FileStoragePersistence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error on second creation, got %v", err)
 	}
-	defer store2.CloseStorage(ctx)
+	defer func() {
+		_ = store2.CloseStorage(ctx)
+	}()
 
 	// Check if the data persisted
 	url, err := store2.GetURL(ctx, "persist123")
@@ -276,7 +286,7 @@ func TestStorage_FileStorageClose(t *testing.T) {
 
 	// Test CloseStorage again - might return error for already closed file
 	// This is expected behavior
-	err = store.CloseStorage(ctx)
+	_ = store.CloseStorage(ctx)
 	// We don't check for specific error as it depends on implementation
 }
 
@@ -290,7 +300,9 @@ func TestStorage_FileStorageEmptyBatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 
 	ctx := context.Background()
 

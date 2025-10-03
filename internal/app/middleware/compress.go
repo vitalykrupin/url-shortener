@@ -8,10 +8,9 @@ import (
 )
 
 type compressWriter struct {
-	w             http.ResponseWriter
-	zw            *gzip.Writer
-	statusCode    int
-	headerWritten bool
+	w          http.ResponseWriter
+	zw         *gzip.Writer
+	statusCode int
 }
 
 func newCompressWriter(w http.ResponseWriter) *compressWriter {

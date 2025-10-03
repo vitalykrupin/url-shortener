@@ -36,7 +36,7 @@ func JwtAuthorization(next http.Handler) http.Handler {
 		}
 
 		token, err := req.Cookie("Token")
-		if errors.Is(http.ErrNoCookie, err) {
+		if errors.Is(err, http.ErrNoCookie) {
 			newUUID := uuid.NewString()
 			newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, ShortenerClaims{
 				RegisteredClaims: jwt.RegisteredClaims{

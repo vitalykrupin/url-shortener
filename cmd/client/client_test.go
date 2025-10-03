@@ -35,7 +35,7 @@ func TestSendRequest(t *testing.T) {
 
 		// Send response
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("http://localhost:8080/abc123"))
+		_, _ = w.Write([]byte("http://localhost:8080/abc123"))
 	}))
 	defer server.Close()
 
@@ -67,7 +67,7 @@ func TestSendRequest_ServerError(t *testing.T) {
 	// Create a test server that returns an error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
+		_, _ = w.Write([]byte("Internal Server Error"))
 	}))
 	defer server.Close()
 
@@ -106,7 +106,7 @@ func TestSendRequest_EmptyURL(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Bad Request"))
+		_, _ = w.Write([]byte("Bad Request"))
 	}))
 	defer server.Close()
 
@@ -140,7 +140,7 @@ func TestSendRequest_LongURL(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("http://localhost:8080/short"))
+		_, _ = w.Write([]byte("http://localhost:8080/short"))
 	}))
 	defer server.Close()
 
@@ -174,7 +174,7 @@ func TestSendRequest_SpecialCharacters(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("http://localhost:8080/special"))
+		_, _ = w.Write([]byte("http://localhost:8080/special"))
 	}))
 	defer server.Close()
 
@@ -207,7 +207,7 @@ func TestSendRequest_Headers(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	}))
 	defer server.Close()
 

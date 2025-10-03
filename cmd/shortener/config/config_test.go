@@ -109,7 +109,10 @@ func TestConfig_ParseFlags(t *testing.T) {
 
 			config := NewConfig()
 			os.Args = tt.args
-			config.ParseFlags()
+			err := config.ParseFlags()
+			if err != nil {
+				t.Errorf("ParseFlags() error = %v", err)
+			}
 
 			if config.ServerAddress != tt.expected.ServerAddress {
 				t.Errorf("ServerAddress = %s, want %s", config.ServerAddress, tt.expected.ServerAddress)
@@ -203,7 +206,10 @@ func TestConfig_FlagsOverrideEnvironment(t *testing.T) {
 
 	config := NewConfig()
 	os.Args = []string{"test", "-a", "flag-server:9090", "-b", "http://flag-server:9090"}
-	config.ParseFlags()
+	err := config.ParseFlags()
+	if err != nil {
+		t.Errorf("ParseFlags() error = %v", err)
+	}
 
 	// Note: In the current implementation, env.Parse is called after flag.Parse,
 	// so environment variables override flags, not the other way around.

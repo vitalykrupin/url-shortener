@@ -1,0 +1,24 @@
+{
+  "server": {
+    "address": "localhost:8080",
+    "read_timeout": "10s",
+    "write_timeout": "10s"
+  },
+  "database": {
+    "dsn": "postgres://postgres:password@localhost:5432/shortener?sslmode=disable",
+    "max_open_conns": 25,
+    "max_idle_conns": 25,
+    "conn_max_lifetime": "5m"
+  },
+  "storage": {
+    "file_path": "/tmp/short-url-db.json"
+  },
+  "auth": {
+    "jwt_secret": "supersecretkey",
+    "token_lifetime": "24h"
+  },
+  "logging": {
+    "level": "info",
+    "format": "json"
+  }
+}

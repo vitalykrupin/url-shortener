@@ -31,7 +31,9 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 func Logging(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		requestLogger := zap.Must(zap.NewProduction()).Sugar()
-		defer requestLogger.Sync()
+		defer func() {
+			_ = requestLogger.Sync()
+		}()
 
 		start := time.Now()
 

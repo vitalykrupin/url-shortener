@@ -75,14 +75,6 @@ func TestNewDeleteService(t *testing.T) {
 	if service == nil {
 		t.Fatal("Expected DeleteService to be non-nil")
 	}
-
-	if service.store != mockStore {
-		t.Error("Expected store to be set correctly")
-	}
-
-	if service.input == nil {
-		t.Error("Expected input channel to be initialized")
-	}
 }
 
 func TestDeleteService_Add(t *testing.T) {

@@ -21,7 +21,9 @@ func TestGetAllUserURLs_WithURLs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 	ap := app.NewApp(store, conf, nil)
 
 	// Pre-insert URLs for user
@@ -53,7 +55,9 @@ func TestGetAllUserURLs_NoURLs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
@@ -78,7 +82,9 @@ func TestGetAllUserURLs_NoUserID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
@@ -102,7 +108,9 @@ func TestGetAllUserURLs_WrongMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer store.CloseStorage(context.Background())
+	defer func() {
+		_ = store.CloseStorage(context.Background())
+	}()
 	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
