@@ -1,4 +1,4 @@
-// Package main implements the main URL shortener application
+// Package main implements the authentication service
 package main
 
 import (
@@ -11,17 +11,14 @@ import (
 	"time"
 
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
-	"github.com/vitalykrupin/url-shortener/cmd/shortener/router"
-	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/services/ds"
+	"github.com/vitalykrupin/url-shortener/internal/app/auth/middleware"
+	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
+	"github.com/vitalykrupin/url-shortener/internal/app/handlers/auth"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 	"go.uber.org/zap"
 )
 
 const (
-	// DeleteWorkers is the number of workers for URL deletion
-	DeleteWorkers = 10
-
 	// ShutdownTimeout is the timeout for graceful server shutdown
 	ShutdownTimeout = 10 * time.Second
 
@@ -29,7 +26,7 @@ const (
 	ServerTimeout = 10 * time.Second
 )
 
-// main is the entry point of the application
+// main is the entry point of the authentication service
 func main() {
 	// Initialize logger
 	logger, err := zap.NewProduction()
@@ -70,21 +67,33 @@ func run(logger *zap.SugaredLogger) error {
 		}
 	}()
 
-	// Create delete service
-	deleteSvc := ds.NewDeleteService(store)
-	deleteSvc.Start(DeleteWorkers)
-	defer deleteSvc.Stop()
+	// Create auth service
+	authSvc := authservice.NewAuthService(store)
 
-	// Create application
-	application := app.NewApp(store, conf, deleteSvc)
+	// Create mux router
+	mux := http.NewServeMux()
 
-	// Create router
-	h := router.Build(application)
+	// Register routes
+	mux.Handle("/api/auth/register", auth.NewRegisterHandler(store, authSvc))
+	mux.Handle("/api/auth/login", auth.NewLoginHandler(store, authSvc))
+	
+	// Add a protected route to demonstrate JWT middleware
+	mux.Handle("/api/auth/profile", middleware.JWTMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get user ID from context
+		userID := r.Context().Value(middleware.UserIDKey)
+		if userID == nil {
+			http.Error(w, "User not found in context", http.StatusInternalServerError)
+			return
+		}
+		
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("User ID: " + userID.(string)))
+	})))
 
 	// Create HTTP server
 	srv := &http.Server{
-		Addr:         application.Config.ServerAddress,
-		Handler:      h,
+		Addr:         conf.ServerAddress, // Use server address from config
+		Handler:      mux,
 		ReadTimeout:  ServerTimeout,
 		WriteTimeout: ServerTimeout,
 	}
@@ -92,7 +101,7 @@ func run(logger *zap.SugaredLogger) error {
 	// Channels for handling errors and signals
 	errCh := make(chan error, 1)
 	go func() {
-		logger.Infow("Starting server", "address", application.Config.ServerAddress)
+		logger.Infow("Starting auth service", "address", conf.ServerAddress)
 		errCh <- srv.ListenAndServe()
 	}()
 

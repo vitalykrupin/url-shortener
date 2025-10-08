@@ -1,3 +1,4 @@
+// Package handlers provides HTTP request handlers
 package handlers
 
 import (
@@ -13,24 +14,29 @@ import (
 	"github.com/vitalykrupin/url-shortener/internal/app/utils"
 )
 
+// postJSONRequest represents the JSON request structure for POST handler
 type postJSONRequest struct {
 	URL string `json:"url"`
 }
 
+// postJSONResponse represents the JSON response structure for POST handler
 type postJSONResponse struct {
 	Alias string `json:"result"`
 }
 
+// PostHandler handles POST requests for URL creation
 type PostHandler struct {
 	BaseHandler
 }
 
+// NewPostHandler is the constructor for PostHandler
 func NewPostHandler(app *app.App) *PostHandler {
 	return &PostHandler{
 		BaseHandler: BaseHandler{app},
 	}
 }
 
+// ServeHTTP handles the HTTP request for URL creation
 func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), ctxTimeout)
 	defer cancel()
@@ -43,6 +49,13 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	URL, err := parseBody(req)
 	if err != nil {
 		log.Println("Can not parse body", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	
+	// Check if URL is empty
+	if URL == "" {
+		log.Println("Empty URL in request")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -71,6 +84,9 @@ func (handler *PostHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	}
 }
 
+// parseBody parses the request body
+// req is the HTTP request
+// Returns the URL string and an error if parsing failed
 func parseBody(req *http.Request) (string, error) {
 	defer req.Body.Close()
 	if req.Header.Get("Content-Type") == "application/json" {
@@ -90,10 +106,16 @@ func parseBody(req *http.Request) (string, error) {
 	return stringBody, err
 }
 
-func printResponse(w http.ResponseWriter, req *http.Request, alias string, allreadyAdded bool) error {
+// printResponse prints the response
+// w is the HTTP response writer
+// req is the HTTP request
+// alias is the short URL alias
+// alreadyAdded indicates if the URL was already added
+// Returns an error if printing failed
+func printResponse(w http.ResponseWriter, req *http.Request, alias string, alreadyAdded bool) error {
 	if req.Header.Get("Content-Type") == "application/json" {
 		w.Header().Set("Content-Type", "application/json")
-		if allreadyAdded {
+		if alreadyAdded {
 			w.WriteHeader(http.StatusConflict)
 		} else {
 			w.WriteHeader(http.StatusCreated)
@@ -101,7 +123,8 @@ func printResponse(w http.ResponseWriter, req *http.Request, alias string, allre
 		err := json.NewEncoder(w).Encode(postJSONResponse{Alias: alias})
 		return err
 	}
-	if allreadyAdded {
+	w.Header().Set("Content-Type", "text/plain")
+	if alreadyAdded {
 		w.WriteHeader(http.StatusConflict)
 	} else {
 		w.WriteHeader(http.StatusCreated)

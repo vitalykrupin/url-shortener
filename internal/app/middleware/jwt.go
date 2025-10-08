@@ -1,26 +1,25 @@
+// Package middleware provides HTTP middleware functions for the main application
 package middleware
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
-type CookieKey string
-
-type ShortenerClaims struct {
-	jwt.RegisteredClaims
-	UserID string
-}
+// ContextKey represents the context key type
+type ContextKey string
 
 const (
-	UserIDKey CookieKey = "UserId"
-	tokenLT             = time.Hour * 24
+	// UserIDKey is the key for user ID in context
+	UserIDKey ContextKey = "user_id"
+	
+	// DefaultAuthServerURL is the default URL for auth service
+	DefaultAuthServerURL = "http://auth:8082"
 )
 
 // SetUserID is a helper function for tests to set user ID in context
@@ -28,53 +27,96 @@ func SetUserID(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, UserIDKey, userID)
 }
 
-func JwtAuthorization(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		secretKey := os.Getenv("JWT_SECRET")
-		if secretKey == "" {
-			secretKey = "insecure-default-change-me"
+// ExternalJwtAuthorization provides JWT authorization middleware for main application
+// It validates tokens by calling the external auth service
+func ExternalJwtAuthorization(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get auth service URL from environment or use default
+		authServerURL := os.Getenv("AUTH_SERVER_URL")
+		if authServerURL == "" {
+			authServerURL = DefaultAuthServerURL
 		}
-
-		token, err := req.Cookie("Token")
-		if errors.Is(err, http.ErrNoCookie) {
-			newUUID := uuid.NewString()
-			newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, ShortenerClaims{
-				RegisteredClaims: jwt.RegisteredClaims{
-					ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenLT)),
-				},
-				UserID: newUUID,
-			})
-			strJwt, err := newToken.SignedString([]byte(secretKey))
+		
+		fmt.Printf("Auth server URL: %s\n", authServerURL)
+		
+		// Get token from Authorization header
+		authHeader := r.Header.Get("Authorization")
+		fmt.Printf("Authorization header: %s\n", authHeader)
+		
+		if authHeader == "" {
+			// Try to get token from cookie
+			cookie, err := r.Cookie("token")
 			if err != nil {
-				w.WriteHeader(http.StatusUnauthorized)
+				http.Error(w, "Missing token", http.StatusUnauthorized)
 				return
 			}
-
-			http.SetCookie(w, &http.Cookie{
-				Name:     "Token",
-				Value:    strJwt,
-				HttpOnly: true,
-				SameSite: http.SameSiteLaxMode,
-			})
-			if req.RequestURI == "/api/user/urls" {
-				next.ServeHTTP(w, req)
-				return
-			}
-			ctx := context.WithValue(req.Context(), UserIDKey, newUUID)
-			next.ServeHTTP(w, req.WithContext(ctx))
+			authHeader = "Bearer " + cookie.Value
+		}
+		
+		// Parse token
+		tokenString := ""
+		if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+			tokenString = authHeader[7:]
+		} else {
+			http.Error(w, "Invalid token format", http.StatusUnauthorized)
 			return
 		}
-
-		claims := &ShortenerClaims{}
-
-		_, err = jwt.ParseWithClaims(token.Value, claims, func(t *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		
+		fmt.Printf("Token string: %s\n", tokenString)
+		
+		// Create request to auth service to validate token
+		client := &http.Client{
+			Timeout: 10 * time.Second,
+		}
+		
+		// Prepare request to auth service
+		req, err := http.NewRequest("GET", authServerURL+"/api/auth/profile", nil)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
-		ctx := context.WithValue(req.Context(), UserIDKey, claims.UserID)
-		next.ServeHTTP(w, req.WithContext(ctx))
+		
+		// Add authorization header
+		req.Header.Set("Authorization", "Bearer "+tokenString)
+		
+		// Send request to auth service
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("Error calling auth service: %v\n", err)
+			http.Error(w, "Auth service unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		defer resp.Body.Close()
+		
+		fmt.Printf("Auth service response status: %d\n", resp.StatusCode)
+		
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			if resp.StatusCode == http.StatusUnauthorized {
+				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				return
+			}
+			http.Error(w, "Auth service error", http.StatusServiceUnavailable)
+			return
+		}
+		
+		// Extract user ID from response
+		// Since the auth service returns "User ID: {id}", we need to parse it
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Printf("Error reading response body: %v\n", err)
+			http.Error(w, "Failed to read response", http.StatusInternalServerError)
+			return
+		}
+		
+		responseBody := string(body)
+		fmt.Printf("Auth service response body: %s\n", responseBody)
+		
+		userID := strings.TrimSpace(strings.TrimPrefix(responseBody, "User ID: "))
+		fmt.Printf("Extracted user ID: %s\n", userID)
+		
+		// Add user ID to context
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

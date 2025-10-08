@@ -22,7 +22,7 @@ URL Shortener - это сервис для сокращения URL, напис�
 
 ## Требования
 
-- Go 1.19 или выше
+- Go 1.23 или выше
 - PostgreSQL (опционально)
 - Docker (опционально)
 
@@ -56,7 +56,7 @@ URL Shortener - это сервис для сокращения URL, напис�
 
 ## Запуск
 
-### Локальный запуск
+### Локальный запуск основного сервиса
 
 ```
 go run cmd/shortener/main.go
@@ -74,18 +74,41 @@ go run cmd/shortener/main.go -a localhost:8080 -b http://localhost:8080
 go run cmd/shortener/main.go -d "postgres://user:password@localhost:5432/dbname?sslmode=disable"
 ```
 
+### Запуск сервиса авторизации
+
+```
+go run cmd/auth/main.go
+```
+
+Сервис авторизации запускается на порту 8081 и предоставляет следующие эндпоинты:
+- POST /api/auth/register - регистрация нового пользователя
+- POST /api/auth/login - вход пользователя
+- GET /api/auth/profile - защищенный эндпоинт для проверки токена
+
 ## Использование
+
+### Регистрация пользователя
+
+```
+curl -X POST http://localhost:8081/api/auth/register -H "Content-Type: application/json" -d '{"login":"user1","password":"password123"}'
+```
+
+### Вход пользователя
+
+```
+curl -X POST http://localhost:8081/api/auth/login -H "Content-Type: application/json" -d '{"login":"user1","password":"password123"}'
+```
 
 ### Создание короткого URL
 
 ```
-curl -X POST http://localhost:8080/ -d "https://example.com"
+curl -X POST http://localhost:8080/ -d "https://example.com" -H "Authorization: Bearer <token>"
 ```
 
 ### Создание короткого URL через API
 
 ```
-curl -X POST http://localhost:8080/api/shorten -H "Content-Type: application/json" -d '{"url":"https://example.com"}'
+curl -X POST http://localhost:8080/api/shorten -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{"url":"https://example.com"}'
 ```
 
 ### Получение оригинального URL
@@ -120,6 +143,13 @@ go test ./...
 
 ```
 docker-compose up
+```
+
+Также можно запустить сервис авторизации отдельно:
+
+```
+docker build -t auth-service -f Dockerfile.auth .
+docker run -p 8081:8081 auth-service
 ```
 
 ## Лицензия

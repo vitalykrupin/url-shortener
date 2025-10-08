@@ -61,12 +61,12 @@ func TestBuild_Routes(t *testing.T) {
 		path           string
 		expectedStatus int
 	}{
-		{"GET /ping", "GET", "/ping", http.StatusOK},
-		{"GET /api/user/urls", "GET", "/api/user/urls", http.StatusUnauthorized},         // No JWT token
-		{"POST /api/shorten", "POST", "/api/shorten", http.StatusBadRequest},             // No body
-		{"POST /api/shorten/batch", "POST", "/api/shorten/batch", http.StatusBadRequest}, // No body
-		{"DELETE /api/user/urls", "DELETE", "/api/user/urls", http.StatusUnauthorized},   // No JWT token
-		{"GET /nonexistent", "GET", "/nonexistent", http.StatusNotFound},
+		{"GET /ping", "GET", "/ping", http.StatusUnauthorized},
+		{"GET /api/user/urls", "GET", "/api/user/urls", http.StatusUnauthorized},           // No JWT token
+		{"POST /api/shorten", "POST", "/api/shorten", http.StatusUnauthorized},             // Blocked by auth middleware
+		{"POST /api/shorten/batch", "POST", "/api/shorten/batch", http.StatusUnauthorized}, // Blocked by auth middleware
+		{"DELETE /api/user/urls", "DELETE", "/api/user/urls", http.StatusUnauthorized},     // No JWT token
+		{"GET /nonexistent", "GET", "/nonexistent", http.StatusUnauthorized},
 	}
 
 	for _, tt := range tests {
@@ -101,7 +101,7 @@ func TestBuild_MiddlewareStack(t *testing.T) {
 
 	handler := Build(application)
 
-	// Test that middleware is applied by checking for JWT cookie
+	// Test that middleware is applied (auth required)
 	req := httptest.NewRequest("GET", "/ping", nil)
 	w := httptest.NewRecorder()
 
@@ -110,18 +110,8 @@ func TestBuild_MiddlewareStack(t *testing.T) {
 	res := w.Result()
 	defer res.Body.Close()
 
-	// Should get a JWT cookie from the middleware
-	cookies := res.Cookies()
-	foundJWT := false
-	for _, cookie := range cookies {
-		if cookie.Name == "Token" {
-			foundJWT = true
-			break
-		}
-	}
-
-	if !foundJWT {
-		t.Error("Expected JWT cookie to be set by middleware")
+	if res.StatusCode != http.StatusUnauthorized {
+		t.Errorf("Expected status 401 from auth middleware, got %d", res.StatusCode)
 	}
 }
 
@@ -174,7 +164,7 @@ func TestBuild_LoggingMiddleware(t *testing.T) {
 
 	handler := Build(application)
 
-	// Test that logging middleware doesn't break the request
+	// Test that logging middleware doesn't break the request (but auth still applies)
 	req := httptest.NewRequest("GET", "/ping", nil)
 	w := httptest.NewRecorder()
 
@@ -183,8 +173,7 @@ func TestBuild_LoggingMiddleware(t *testing.T) {
 	res := w.Result()
 	defer res.Body.Close()
 
-	// Should still get a valid response
-	if res.StatusCode != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", res.StatusCode)
+	if res.StatusCode != http.StatusUnauthorized {
+		t.Errorf("Expected status 401, got %d", res.StatusCode)
 	}
 }

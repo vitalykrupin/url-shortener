@@ -1,4 +1,4 @@
-// Package app предоставляет основную структуру приложения и функции для его создания
+// Package app provides the main application structure and creation functions
 package app
 
 import (
@@ -7,23 +7,23 @@ import (
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
-// App основная структура приложения
+// App is the main application structure
 type App struct {
-	// Store интерфейс для работы с хранилищем данных
+	// Store is the interface for working with data storage
 	Store storage.Storage
 
-	// Config конфигурация приложения
+	// Config is the application configuration
 	Config *config.Config
 
-	// DeleteService сервис для удаления URL
+	// DeleteService is the service for deleting URLs
 	DeleteService ds.DeleteServiceInterface
 }
 
-// NewApp создает новый экземпляр приложения
-// store - интерфейс для работы с хранилищем данных
-// conf - конфигурация приложения
-// deleteService - сервис для удаления URL
-// Возвращает указатель на App
+// NewApp creates a new application instance
+// store is the interface for working with data storage
+// conf is the application configuration
+// deleteService is the service for deleting URLs
+// Returns a pointer to App
 func NewApp(store storage.Storage, conf *config.Config, deleteService ds.DeleteServiceInterface) *App {
 	return &App{
 		Store:         store,

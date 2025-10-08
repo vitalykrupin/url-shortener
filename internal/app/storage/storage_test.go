@@ -96,6 +96,7 @@ func TestStorage_InterfaceCompliance(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
+	// Close before TempDir cleanup on Windows to release file handles
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()

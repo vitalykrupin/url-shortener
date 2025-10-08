@@ -1,3 +1,4 @@
+// Package handlers provides HTTP request handlers
 package handlers
 
 import (
@@ -7,17 +8,22 @@ import (
 )
 
 const (
+	// ctxTimeout is the default context timeout
 	ctxTimeout = 10 * time.Second
-	idParam    = "id"
-	aliasSize  = 8
+	
+	// idParam is the URL parameter name for ID
+	idParam = "id"
+	
+	// aliasSize is the default alias size
+	aliasSize = 8
 )
 
-// BaseHandler - базовая структура для всех обработчиков
+// BaseHandler is the base structure for all handlers
 type BaseHandler struct {
 	app *app.App
 }
 
-// NewBaseHandler - конструктор для BaseHandler
+// NewBaseHandler is the constructor for BaseHandler
 func NewBaseHandler(app *app.App) *BaseHandler {
 	return &BaseHandler{app: app}
 }

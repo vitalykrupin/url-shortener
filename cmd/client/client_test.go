@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -20,6 +21,12 @@ func TestSendRequest(t *testing.T) {
 		contentType := r.Header.Get("Content-Type")
 		if contentType != "application/x-www-form-urlencoded" {
 			t.Errorf("Expected Content-Type 'application/x-www-form-urlencoded', got '%s'", contentType)
+		}
+
+		// Check Authorization header if provided
+		auth := r.Header.Get("Authorization")
+		if auth != "" && !strings.HasPrefix(auth, "Bearer ") {
+			t.Errorf("Expected Authorization to start with 'Bearer ', got '%s'", auth)
 		}
 
 		// Read and check body
@@ -206,12 +213,22 @@ func TestSendRequest_Headers(t *testing.T) {
 			t.Error("Expected User-Agent header to be set")
 		}
 
+		// Set env to simulate token and ensure Authorization is set
+		if os.Getenv("AUTH_TOKEN") != "" {
+			if got := r.Header.Get("Authorization"); !strings.HasPrefix(got, "Bearer ") {
+				t.Errorf("Expected Authorization header with Bearer, got '%s'", got)
+			}
+		}
+
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
 	}))
 	defer server.Close()
 
 	// Test sendRequest function
+	// Provide token via env to trigger Authorization header
+	os.Setenv("AUTH_TOKEN", "test-token")
+	defer os.Unsetenv("AUTH_TOKEN")
 	response, err := sendRequest(server.URL+"/", "https://example.com")
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)

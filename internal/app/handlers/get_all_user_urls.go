@@ -1,3 +1,4 @@
+// Package handlers provides HTTP request handlers
 package handlers
 
 import (
@@ -10,21 +11,25 @@ import (
 	"github.com/vitalykrupin/url-shortener/internal/app/middleware"
 )
 
+// GetAllUserURLs handles GET requests for retrieving all user URLs
 type GetAllUserURLs struct {
 	BaseHandler
 }
 
+// getUserURLsResponseUnit represents a single unit in the user URLs response
 type getUserURLsResponseUnit struct {
 	Alias       string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
 
+// NewGetAllUserURLs is the constructor for GetAllUserURLs
 func NewGetAllUserURLs(app *app.App) *GetAllUserURLs {
 	return &GetAllUserURLs{
 		BaseHandler: BaseHandler{app},
 	}
 }
 
+// ServeHTTP handles the HTTP request for retrieving all user URLs
 func (handler *GetAllUserURLs) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), ctxTimeout)
 	defer cancel()

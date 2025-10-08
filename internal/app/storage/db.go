@@ -1,4 +1,4 @@
-// Package storage предоставляет реализацию хранилища данных в PostgreSQL
+// Package storage provides PostgreSQL data storage implementation
 package storage
 
 import (
@@ -12,29 +12,29 @@ import (
 	"github.com/vitalykrupin/url-shortener/internal/app/middleware"
 )
 
-// DB реализация хранилища данных в PostgreSQL
+// DB is the PostgreSQL data storage implementation
 type DB struct {
-	// pool пул соединений с базой данных
+	// pool is the database connection pool
 	pool *pgxpool.Pool
 }
 
-// ErrDeleted ошибка, возникающая при попытке получить удаленный URL
+// ErrDeleted is an error that occurs when trying to get a deleted URL
 var ErrDeleted = errors.New(`url deleted`)
 
-// NewDB создает новое подключение к базе данных PostgreSQL
-// DBDSN строка подключения к базе данных
-// Возвращает указатель на DB и ошибку, если подключение не удалось
+// NewDB creates a new connection to the PostgreSQL database
+// DBDSN is the database connection string
+// Returns a pointer to DB and an error if the connection failed
 func NewDB(DBDSN string) (*DB, error) {
 	ctx := context.Background()
 
-	// Создание пула соединений
+	// Create connection pool
 	conn, err := pgxpool.New(ctx, DBDSN)
 	if err != nil {
 		log.Println("Can not connect to database")
 		return nil, err
 	}
 
-	// Создание таблицы urls, если она не существует
+	// Create urls table if it doesn't exist
 	_, err = conn.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS urls (
 			id serial PRIMARY KEY,
@@ -48,13 +48,26 @@ func NewDB(DBDSN string) (*DB, error) {
 		return nil, err
 	}
 
+	// Create users table if it doesn't exist
+	_, err = conn.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			login VARCHAR(255) NOT NULL UNIQUE,
+			password VARCHAR(255) NOT NULL,
+			user_id VARCHAR(255) NOT NULL UNIQUE
+		);`)
+	if err != nil {
+		log.Println("Can not create users table")
+		return nil, err
+	}
+
 	return &DB{conn}, nil
 }
 
-// Add добавляет новые URL в базу данных
-// ctx контекст запроса
-// batch карта alias -> OriginalURL для добавления
-// Возвращает ошибку, если добавление не удалось
+// Add adds new URLs to the database
+// ctx is the request context
+// batch is the map of alias -> OriginalURL to add
+// Returns an error if the addition failed
 func (d *DB) Add(ctx context.Context, batch map[Alias]OriginalURL) error {
 	if len(batch) == 0 {
 		return nil
@@ -86,10 +99,10 @@ func (d *DB) Add(ctx context.Context, batch map[Alias]OriginalURL) error {
 	return nil
 }
 
-// GetAlias получает alias для заданного URL
-// ctx контекст запроса
-// url оригинальный URL
-// Возвращает alias и ошибку, если получение не удалось
+// GetAlias gets the alias for a given URL
+// ctx is the request context
+// url is the original URL
+// Returns the alias and an error if retrieval failed
 func (d *DB) GetAlias(ctx context.Context, url OriginalURL) (Alias, error) {
 	userID := ctx.Value(middleware.UserIDKey)
 	if userID == nil || userID == "" {
@@ -108,10 +121,10 @@ func (d *DB) GetAlias(ctx context.Context, url OriginalURL) (Alias, error) {
 	return alias, nil
 }
 
-// GetURL получает оригинальный URL по alias
-// ctx контекст запроса
-// alias короткий alias URL
-// Возвращает оригинальный URL и ошибку, если получение не удалось
+// GetURL gets the original URL by alias
+// ctx is the request context
+// alias is the short URL alias
+// Returns the original URL and an error if retrieval failed
 func (d *DB) GetURL(ctx context.Context, alias Alias) (OriginalURL, error) {
 	var url OriginalURL
 	var deletedFlag bool
@@ -130,10 +143,10 @@ func (d *DB) GetURL(ctx context.Context, alias Alias) (OriginalURL, error) {
 	return url, nil
 }
 
-// GetUserURLs получает все URL пользователя
-// ctx контекст запроса
-// userID идентификатор пользователя
-// Возвращает карту alias -> OriginalURL и ошибку, если получение не удалось
+// GetUserURLs gets all URLs for a user
+// ctx is the request context
+// userID is the user identifier
+// Returns a map of alias -> OriginalURL and an error if retrieval failed
 func (d *DB) GetUserURLs(ctx context.Context, userID string) (AliasKeysMap, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
@@ -164,11 +177,11 @@ func (d *DB) GetUserURLs(ctx context.Context, userID string) (AliasKeysMap, erro
 	return result, nil
 }
 
-// DeleteUserURLs помечает URL пользователя как удаленные
-// ctx контекст запроса
-// userID идентификатор пользователя
-// aliases список alias для удаления
-// Возвращает ошибку, если удаление не удалось
+// DeleteUserURLs marks user URLs as deleted
+// ctx is the request context
+// userID is the user identifier
+// aliases is the list of aliases to delete
+// Returns an error if deletion failed
 func (d *DB) DeleteUserURLs(ctx context.Context, userID string, aliases []string) error {
 	if userID == "" {
 		return fmt.Errorf("user ID is required")
@@ -186,9 +199,9 @@ func (d *DB) DeleteUserURLs(ctx context.Context, userID string, aliases []string
 	return nil
 }
 
-// CloseStorage закрывает подключение к базе данных
-// ctx контекст запроса
-// Возвращает ошибку, если закрытие не удалось
+// CloseStorage closes the database connection
+// ctx is the request context
+// Returns an error if closing failed
 func (d *DB) CloseStorage(ctx context.Context) error {
 	if d.pool != nil {
 		d.pool.Close()
@@ -196,9 +209,9 @@ func (d *DB) CloseStorage(ctx context.Context) error {
 	return nil
 }
 
-// PingStorage проверяет подключение к базе данных
-// ctx контекст запроса
-// Возвращает ошибку, если подключение не удалось
+// PingStorage checks the database connection
+// ctx is the request context
+// Returns an error if connection failed
 func (d *DB) PingStorage(ctx context.Context) error {
 	if d.pool == nil {
 		return fmt.Errorf("database pool is not initialized")
@@ -207,6 +220,36 @@ func (d *DB) PingStorage(ctx context.Context) error {
 	if err := d.pool.Ping(ctx); err != nil {
 		log.Printf("Failed to ping database: %v", err)
 		return fmt.Errorf("database ping failed: %w", err)
+	}
+	return nil
+}
+
+// GetUserByLogin retrieves a user by login
+// ctx is the request context
+// login is the user login
+// Returns the user and an error if retrieval failed
+func (d *DB) GetUserByLogin(ctx context.Context, login string) (user *User, err error) {
+	user = &User{}
+	err = d.pool.QueryRow(ctx, `SELECT id, login, password, user_id FROM users WHERE login = $1;`, login).Scan(&user.ID, &user.Login, &user.Password, &user.UserID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("user not found for login: %s", login)
+		}
+		log.Printf("Failed to get user from database: %v", err)
+		return nil, fmt.Errorf("database error: %w", err)
+	}
+	return user, nil
+}
+
+// CreateUser creates a new user
+// ctx is the request context
+// user is the user to create
+// Returns an error if creation failed
+func (d *DB) CreateUser(ctx context.Context, user *User) error {
+	_, err := d.pool.Exec(ctx, `INSERT INTO users (login, password, user_id) VALUES ($1, $2, $3);`, user.Login, user.Password, user.UserID)
+	if err != nil {
+		log.Printf("Failed to create user in database: %v", err)
+		return fmt.Errorf("database error: %w", err)
 	}
 	return nil
 }

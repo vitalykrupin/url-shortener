@@ -1,4 +1,4 @@
-// Package config предоставляет функциональность для работы с конфигурацией приложения
+// Package config provides functionality for working with application configuration
 package config
 
 import (
@@ -12,33 +12,33 @@ import (
 )
 
 const (
-	// defaultServerAddress адрес сервера по умолчанию
+	// defaultServerAddress is the default server address
 	defaultServerAddress = "localhost:8080"
 
-	// defaultResponseAddress базовый URL для ответов по умолчанию
+	// defaultResponseAddress is the default base URL for responses
 	defaultResponseAddress = "http://localhost:8080"
 
-	// defaultDBDSN строка подключения к базе данных по умолчанию
+	// defaultDBDSN is the default database connection string
 	defaultDBDSN = ""
 )
 
-// Config структура для хранения конфигурации приложения
+// Config structure for storing application configuration
 type Config struct {
-	// ServerAddress адрес сервера
+	// ServerAddress is the server address
 	ServerAddress string `env:"SERVER_ADDRESS"`
 
-	// ResponseAddress базовый URL для ответов
+	// ResponseAddress is the base URL for responses
 	ResponseAddress string `env:"BASE_URL"`
 
-	// FileStorePath путь к файлу хранилища
+	// FileStorePath is the path to the storage file
 	FileStorePath string `env:"FILE_STORAGE_PATH"`
 
-	// DBDSN строка подключения к базе данных
+	// DBDSN is the database connection string
 	DBDSN string `env:"DATABASE_DSN"`
 }
 
-// NewConfig создает новый экземпляр конфигурации с значениями по умолчанию
-// Возвращает указатель на Config
+// NewConfig creates a new configuration instance with default values
+// Returns a pointer to Config
 func NewConfig() *Config {
 	return &Config{
 		ServerAddress:   defaultServerAddress,
@@ -48,10 +48,10 @@ func NewConfig() *Config {
 	}
 }
 
-// ParseFlags парсит флаги командной строки и переменные окружения
-// Возвращает ошибку, если парсинг не удался или конфигурация невалидна
+// ParseFlags parses command line flags and environment variables
+// Returns an error if parsing failed or configuration is invalid
 func (c *Config) ParseFlags() error {
-	// Регистрация флагов командной строки
+	// Register command line flags
 	flag.Func("a", "example: '-a localhost:8080'", func(addr string) error {
 		c.ServerAddress = addr
 		return nil
@@ -70,13 +70,13 @@ func (c *Config) ParseFlags() error {
 	})
 	flag.Parse()
 
-	// Парсинг переменных окружения
+	// Parse environment variables
 	err := env.Parse(c)
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variables: %w", err)
 	}
 
-	// Валидация конфигурации
+	// Validate configuration
 	if err := c.Validate(); err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
@@ -84,25 +84,25 @@ func (c *Config) ParseFlags() error {
 	return nil
 }
 
-// Validate проверяет корректность конфигурации
-// Возвращает ошибку, если конфигурация невалидна
+// Validate checks the correctness of the configuration
+// Returns an error if the configuration is invalid
 func (c *Config) Validate() error {
-	// Проверка адреса сервера
+	// Check server address
 	if c.ServerAddress == "" {
 		return fmt.Errorf("server address is required")
 	}
 
-	// Проверка базового URL
+	// Check base URL
 	if c.ResponseAddress == "" {
 		return fmt.Errorf("response address is required")
 	}
 
-	// Проверка корректности URL
+	// Check URL format
 	if _, err := url.ParseRequestURI(c.ResponseAddress); err != nil {
 		return fmt.Errorf("invalid response address format: %w", err)
 	}
 
-	// Проверка пути к файлу хранилища (если используется файловое хранилище)
+	// Check storage file path (if file storage is used)
 	if c.DBDSN == "" && c.FileStorePath == "" {
 		return fmt.Errorf("either database DSN or file storage path must be provided")
 	}

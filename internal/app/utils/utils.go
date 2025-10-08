@@ -1,3 +1,4 @@
+// Package utils provides utility functions
 package utils
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// RandomString generates a random string of specified size
 func RandomString(size int) string {
 	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 	if size <= 0 {
@@ -26,6 +28,7 @@ func RandomString(size int) string {
 	return string(result)
 }
 
+// AddChiContext adds chi context to an HTTP request
 func AddChiContext(r *http.Request, params map[string]string) *http.Request {
 	c := chi.NewRouteContext()
 	req := r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, c))
@@ -36,6 +39,7 @@ func AddChiContext(r *http.Request, params map[string]string) *http.Request {
 	return req
 }
 
+// WithHeader adds a header to an HTTP request
 func WithHeader(req *http.Request, key string, value string) *http.Request {
 	req.Header.Add(key, value)
 	return req

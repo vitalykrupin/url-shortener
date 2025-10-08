@@ -14,6 +14,21 @@ services:
       - db
     restart: unless-stopped
 
+  # Сервис авторизации
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile.auth
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_ADDRESS=:8082
+      - DATABASE_DSN=postgres://postgres:password@db:5432/shortener?sslmode=disable
+      - JWT_SECRET=supersecretkey
+    depends_on:
+      - db
+    restart: unless-stopped
+
   # Сервис базы данных PostgreSQL
   db:
     image: postgres:13-alpine
@@ -41,3 +56,4 @@ services:
 
 volumes:
   postgres_data:
+  

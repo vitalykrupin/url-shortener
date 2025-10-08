@@ -1,3 +1,4 @@
+// Package handlers provides HTTP request handlers
 package handlers
 
 import (
@@ -11,26 +12,31 @@ import (
 	"github.com/vitalykrupin/url-shortener/internal/app/utils"
 )
 
+// postBatchRequestUnit represents a single unit in the batch request
 type postBatchRequestUnit struct {
 	CorrelationID string `json:"correlation_id"`
 	URL           string `json:"original_url"`
 }
 
+// postBatchResponseUnit represents a single unit in the batch response
 type postBatchResponseUnit struct {
 	CorrelationID string `json:"correlation_id"`
 	Alias         string `json:"short_url"`
 }
 
+// PostBatchHandler handles POST requests for batch URL creation
 type PostBatchHandler struct {
 	BaseHandler
 }
 
+// NewPostBatchHandler is the constructor for PostBatchHandler
 func NewPostBatchHandler(app *app.App) *PostBatchHandler {
 	return &PostBatchHandler{
 		BaseHandler: BaseHandler{app},
 	}
 }
 
+// ServeHTTP handles the HTTP request for batch URL creation
 func (handler *PostBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), ctxTimeout)
 	defer cancel()

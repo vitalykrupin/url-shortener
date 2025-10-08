@@ -53,6 +53,14 @@ func (m *mockStorage) PingStorage(ctx context.Context) error {
 	return nil
 }
 
+func (m *mockStorage) GetUserByLogin(ctx context.Context, login string) (*storage.User, error) {
+	return nil, nil
+}
+
+func (m *mockStorage) CreateUser(ctx context.Context, user *storage.User) error {
+	return nil
+}
+
 func (m *mockStorage) GetDeleteCalls() []struct {
 	userID string
 	urls   []string

@@ -1,4 +1,4 @@
-// Package router предоставляет функциональность для маршрутизации HTTP запросов
+// Package router provides functionality for HTTP request routing
 package router
 
 import (
@@ -12,40 +12,40 @@ import (
 	appMiddleware "github.com/vitalykrupin/url-shortener/internal/app/middleware"
 )
 
-// Build создает и настраивает маршрутизатор HTTP запросов
-// app - экземпляр приложения
-// Возвращает http.Handler для обработки запросов
+// Build creates and configures the HTTP request router
+// app is the application instance
+// Returns http.Handler for handling requests
 func Build(app *app.App) http.Handler {
 	r := chi.NewRouter()
 
-	// Стандартные middleware из chi
-	r.Use(chiMiddleware.RequestID)                 // Добавляет уникальный ID к каждому запросу
-	r.Use(chiMiddleware.RealIP)                    // Определяет реальный IP адрес клиента
-	r.Use(chiMiddleware.Logger)                    // Логирует HTTP запросы
-	r.Use(chiMiddleware.Recoverer)                 // Восстанавливается после паники в обработчиках
-	r.Use(chiMiddleware.Timeout(60 * time.Second)) // Устанавливает таймаут для запросов
+	// Standard middleware from chi
+	r.Use(chiMiddleware.RequestID)                 // Adds unique ID to each request
+	r.Use(chiMiddleware.RealIP)                    // Determines real client IP address
+	r.Use(chiMiddleware.Logger)                    // Logs HTTP requests
+	r.Use(chiMiddleware.Recoverer)                 // Recovers from panics in handlers
+	r.Use(chiMiddleware.Timeout(60 * time.Second)) // Sets timeout for requests
 
-	// Пользовательские middleware
-	r.Use(appMiddleware.Logging)          // Пользовательское логирование
-	r.Use(appMiddleware.GzipMiddleware)   // Поддержка сжатия gzip
-	r.Use(appMiddleware.JwtAuthorization) // Авторизация через JWT
+	// Custom middleware
+	r.Use(appMiddleware.Logging)          // Custom logging
+	r.Use(appMiddleware.GzipMiddleware)        // Gzip compression support
+	r.Use(appMiddleware.ExternalJwtAuthorization) // External JWT authorization
 
-	// Маршруты для получения URL
-	r.Handle(`/{id}`, handlers.NewGetHandler(app)) // Получение оригинального URL по короткому alias
+	// Routes for getting URLs
+	r.Handle(`/{id}`, handlers.NewGetHandler(app)) // Get original URL by short alias
 
-	// Маршруты для проверки работоспособности
-	r.Method(http.MethodGet, `/ping`, handlers.NewGetPingHandler(app)) // Проверка подключения к базе данных
+	// Routes for health checks
+	r.Method(http.MethodGet, `/ping`, handlers.NewGetPingHandler(app)) // Check database connection
 
-	// Маршруты для работы с URL пользователя
-	r.Method(http.MethodGet, `/api/user/urls`, handlers.NewGetAllUserURLs(app)) // Получение всех URL пользователя
+	// Routes for working with user URLs
+	r.Method(http.MethodGet, `/api/user/urls`, handlers.NewGetAllUserURLs(app)) // Get all user URLs
 
-	// Маршруты для создания коротких URL
-	r.Handle(`/`, handlers.NewPostHandler(app))                                        // Создание короткого URL из тела запроса
-	r.Method(http.MethodPost, `/api/shorten`, handlers.NewPostHandler(app))            // Создание короткого URL из JSON
-	r.Method(http.MethodPost, `/api/shorten/batch`, handlers.NewPostBatchHandler(app)) // Создание нескольких коротких URL
+	// Routes for creating short URLs
+	r.Handle(`/`, handlers.NewPostHandler(app))                                        // Create short URL from request body
+	r.Method(http.MethodPost, `/api/shorten`, handlers.NewPostHandler(app))            // Create short URL from JSON
+	r.Method(http.MethodPost, `/api/shorten/batch`, handlers.NewPostBatchHandler(app)) // Create multiple short URLs
 
-	// Маршруты для удаления URL
-	r.Method(http.MethodDelete, `/api/user/urls`, handlers.NewDeleteHandler(app)) // Удаление URL пользователя
+	// Routes for deleting URLs
+	r.Method(http.MethodDelete, `/api/user/urls`, handlers.NewDeleteHandler(app)) // Delete user URLs
 
 	return r
 }

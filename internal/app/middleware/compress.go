@@ -1,3 +1,4 @@
+// Package middleware provides HTTP middleware functions
 package middleware
 
 import (
@@ -7,12 +8,14 @@ import (
 	"strings"
 )
 
+// compressWriter wraps http.ResponseWriter to provide gzip compression
 type compressWriter struct {
 	w          http.ResponseWriter
 	zw         *gzip.Writer
 	statusCode int
 }
 
+// newCompressWriter creates a new compressWriter
 func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	return &compressWriter{
 		w:  w,
@@ -20,10 +23,12 @@ func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	}
 }
 
+// Header returns the header map
 func (c *compressWriter) Header() http.Header {
 	return c.w.Header()
 }
 
+// Write writes the data to the connection as part of an HTTP reply
 func (c *compressWriter) Write(p []byte) (int, error) {
 	if c.statusCode >= 300 || c.statusCode == 0 {
 		// For error status codes or before status is set, write directly without compression
@@ -32,6 +37,7 @@ func (c *compressWriter) Write(p []byte) (int, error) {
 	return c.zw.Write(p)
 }
 
+// WriteHeader sends an HTTP response header with the provided status code
 func (c *compressWriter) WriteHeader(statusCode int) {
 	c.statusCode = statusCode
 	if statusCode < 300 {
@@ -41,15 +47,18 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 	c.w.WriteHeader(statusCode)
 }
 
+// Close closes the compressWriter
 func (c *compressWriter) Close() error {
 	return c.zw.Close()
 }
 
+// compressReader wraps io.ReadCloser to provide gzip decompression
 type compressReader struct {
 	r  io.ReadCloser
 	zr *gzip.Reader
 }
 
+// newCompressReader creates a new compressReader
 func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
@@ -62,10 +71,12 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read reads up to len(p) bytes into p
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zr.Read(p)
 }
 
+// Close closes the compressReader
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err
@@ -73,6 +84,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// GzipMiddleware provides gzip compression for HTTP responses
 func GzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
