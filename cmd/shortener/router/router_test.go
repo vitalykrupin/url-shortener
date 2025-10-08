@@ -7,7 +7,6 @@ import (
 
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
@@ -30,8 +29,7 @@ func TestBuild(t *testing.T) {
 	}
 
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	application := app.NewApp(store, conf, deleteSvc, authSvc)
+	application := app.NewApp(store, conf, deleteSvc)
 
 	handler := Build(application)
 	if handler == nil {
@@ -53,8 +51,7 @@ func TestBuild_Routes(t *testing.T) {
 	}
 
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	application := app.NewApp(store, conf, deleteSvc, authSvc)
+	application := app.NewApp(store, conf, deleteSvc)
 
 	handler := Build(application)
 
@@ -100,8 +97,7 @@ func TestBuild_MiddlewareStack(t *testing.T) {
 	}
 
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	application := app.NewApp(store, conf, deleteSvc, authSvc)
+	application := app.NewApp(store, conf, deleteSvc)
 
 	handler := Build(application)
 
@@ -130,8 +126,7 @@ func TestBuild_CompressionMiddleware(t *testing.T) {
 	}
 
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	application := app.NewApp(store, conf, deleteSvc, authSvc)
+	application := app.NewApp(store, conf, deleteSvc)
 
 	handler := Build(application)
 
@@ -165,8 +160,7 @@ func TestBuild_LoggingMiddleware(t *testing.T) {
 	}
 
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	application := app.NewApp(store, conf, deleteSvc, authSvc)
+	application := app.NewApp(store, conf, deleteSvc)
 
 	handler := Build(application)
 

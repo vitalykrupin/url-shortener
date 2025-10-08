@@ -10,7 +10,7 @@ func TestJwtAuthorization_NoToken_Unauthorized(t *testing.T) {
 	base := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	h := ExternalJwtAuthorization(base)
+	h := JWTMiddleware(base)
 
 	req := httptest.NewRequest(http.MethodGet, "/some", nil)
 	rec := httptest.NewRecorder()
@@ -27,7 +27,7 @@ func TestJwtAuthorization_InvalidToken_Unauthorized(t *testing.T) {
 	base := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("handler should not be called with invalid token")
 	})
-	h := ExternalJwtAuthorization(base)
+	h := JWTMiddleware(base)
 
 	req := httptest.NewRequest(http.MethodGet, "/some", nil)
 	req.AddCookie(&http.Cookie{Name: "Token", Value: "invalid.token.here"})
@@ -47,7 +47,7 @@ func TestJwtAuthorization_ProtectedEndpoint_Unauthorized(t *testing.T) {
 	base := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	h := ExternalJwtAuthorization(base)
+	h := JWTMiddleware(base)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 	rec := httptest.NewRecorder()

@@ -13,7 +13,6 @@ import (
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/router"
 	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/services/ds"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 	"go.uber.org/zap"
@@ -76,11 +75,8 @@ func run(logger *zap.SugaredLogger) error {
 	deleteSvc.Start(DeleteWorkers)
 	defer deleteSvc.Stop()
 
-	// Create auth service
-	authSvc := authservice.NewAuthService(store)
-
 	// Create application
-	application := app.NewApp(store, conf, deleteSvc, authSvc)
+	application := app.NewApp(store, conf, deleteSvc)
 
 	// Create router
 	h := router.Build(application)

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 	"github.com/vitalykrupin/url-shortener/internal/app/utils"
 )
@@ -48,8 +47,7 @@ func TestGetHandler_ServeHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	authSvc := authservice.NewAuthService(store)
-	newApp := app.NewApp(store, conf, nil, authSvc)
+	newApp := app.NewApp(store, conf, nil)
 	tests := []struct {
 		name string
 		args args
@@ -119,8 +117,7 @@ func TestPostHandler_ServeHTTP(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 
-	authSvc := authservice.NewAuthService(store)
-	newApp := app.NewApp(store, conf, nil, authSvc)
+	newApp := app.NewApp(store, conf, nil)
 
 	tests := []struct {
 		name string
@@ -176,8 +173,7 @@ func TestPostJSONHandler_ServeHTTP(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	newApp := app.NewApp(store, conf, nil, authSvc)
+	newApp := app.NewApp(store, conf, nil)
 
 	tests := []struct {
 		name string

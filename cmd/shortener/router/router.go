@@ -9,7 +9,6 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/vitalykrupin/url-shortener/internal/app"
 	"github.com/vitalykrupin/url-shortener/internal/app/handlers"
-	"github.com/vitalykrupin/url-shortener/internal/app/handlers/auth"
 	appMiddleware "github.com/vitalykrupin/url-shortener/internal/app/middleware"
 )
 
@@ -27,9 +26,9 @@ func Build(app *app.App) http.Handler {
 	r.Use(chiMiddleware.Timeout(60 * time.Second)) // Sets timeout for requests
 
 	// Custom middleware
-	r.Use(appMiddleware.Logging)          // Custom logging
-	r.Use(appMiddleware.GzipMiddleware)        // Gzip compression support
-	r.Use(appMiddleware.ExternalJwtAuthorization) // External JWT authorization
+	r.Use(appMiddleware.Logging)        // Custom logging
+	r.Use(appMiddleware.GzipMiddleware) // Gzip compression support
+	r.Use(appMiddleware.JWTMiddleware)  // JWT authorization via auth-service
 
 	// Routes for getting URLs
 	r.Handle(`/{id}`, handlers.NewGetHandler(app)) // Get original URL by short alias
@@ -47,10 +46,6 @@ func Build(app *app.App) http.Handler {
 
 	// Routes for deleting URLs
 	r.Method(http.MethodDelete, `/api/user/urls`, handlers.NewDeleteHandler(app)) // Delete user URLs
-
-	// Routes for user authentication
-	r.Method(http.MethodPost, `/api/auth/register`, auth.NewRegisterHandler(app.Store, app.AuthService)) // Register new user
-	r.Method(http.MethodPost, `/api/auth/login`, auth.NewLoginHandler(app.Store, app.AuthService))     // Login user
 
 	return r
 }

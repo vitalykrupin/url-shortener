@@ -17,14 +17,15 @@ services:
   # Сервис авторизации
   auth:
     build:
-      context: .
-      dockerfile: Dockerfile.auth
+      context: ../auth-service
+      dockerfile: Dockerfile
     ports:
       - "8082:8082"
     environment:
       - SERVER_ADDRESS=:8082
       - DATABASE_DSN=postgres://postgres:password@db:5432/shortener?sslmode=disable
       - JWT_SECRET=supersecretkey
+      - REFRESH_TOKEN_TTL=720
     depends_on:
       - db
     restart: unless-stopped

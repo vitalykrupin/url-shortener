@@ -9,7 +9,6 @@ import (
 
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/middleware"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
@@ -25,8 +24,7 @@ func TestGetAllUserURLs_WithURLs(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	// Pre-insert URLs for user
 	ctx := middleware.SetUserID(httptest.NewRequest(http.MethodPost, "/", nil).Context(), "user123")
@@ -60,8 +58,7 @@ func TestGetAllUserURLs_NoURLs(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 	req = req.WithContext(middleware.SetUserID(req.Context(), "user123"))
@@ -88,8 +85,7 @@ func TestGetAllUserURLs_NoUserID(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 	// No user ID in context
@@ -115,8 +111,7 @@ func TestGetAllUserURLs_WrongMethod(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
 	req = req.WithContext(middleware.SetUserID(req.Context(), "user123"))

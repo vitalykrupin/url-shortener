@@ -11,7 +11,6 @@ import (
 
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
@@ -36,8 +35,7 @@ func TestPostBatchHandler_MixedExistingAndNew(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	// Pre-insert existing URL
 	_ = store.Add(httptest.NewRequest(http.MethodPost, "/", nil).Context(), map[storage.Alias]storage.OriginalURL{"exist01": "https://exist"})
@@ -80,8 +78,7 @@ func TestPostBatchHandler_AllExisting(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	// Pre-insert existing URLs
 	_ = store.Add(httptest.NewRequest(http.MethodPost, "/", nil).Context(), map[storage.Alias]storage.OriginalURL{
@@ -124,8 +121,7 @@ func TestPostBatchHandler_AllNew(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	body, _ := json.Marshal([]batchReq{
 		{CorrelationID: "1", URL: "https://new1"},
@@ -162,8 +158,7 @@ func TestPostBatchHandler_InvalidJSON(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -189,8 +184,7 @@ func TestPostBatchHandler_WrongContentType(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	body, _ := json.Marshal([]batchReq{{CorrelationID: "1", URL: "https://test"}})
 	req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", bytes.NewReader(body))
@@ -217,8 +211,7 @@ func TestPostBatchHandler_WrongMethod(t *testing.T) {
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, nil, authSvc)
+	ap := app.NewApp(store, conf, nil)
 
 	body, _ := json.Marshal([]batchReq{{CorrelationID: "1", URL: "https://test"}})
 	req := httptest.NewRequest(http.MethodGet, "/api/shorten/batch", bytes.NewReader(body))

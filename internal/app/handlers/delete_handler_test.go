@@ -11,7 +11,6 @@ import (
 
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/middleware"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
@@ -44,8 +43,7 @@ func TestDeleteHandler_ValidRequest(t *testing.T) {
 	}()
 	// Create a mock delete service for testing
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, deleteSvc, authSvc)
+	ap := app.NewApp(store, conf, deleteSvc)
 
 	aliases := []string{"alias1", "alias2"}
 	body, _ := json.Marshal(aliases)
@@ -74,8 +72,7 @@ func TestDeleteHandler_NoUserID(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, deleteSvc, authSvc)
+	ap := app.NewApp(store, conf, deleteSvc)
 
 	aliases := []string{"alias1", "alias2"}
 	body, _ := json.Marshal(aliases)
@@ -104,8 +101,7 @@ func TestDeleteHandler_WrongMethod(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, deleteSvc, authSvc)
+	ap := app.NewApp(store, conf, deleteSvc)
 
 	aliases := []string{"alias1", "alias2"}
 	body, _ := json.Marshal(aliases)
@@ -134,8 +130,7 @@ func TestDeleteHandler_InvalidJSON(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 	deleteSvc := &mockDeleteService{}
-	authSvc := authservice.NewAuthService(store)
-	ap := app.NewApp(store, conf, deleteSvc, authSvc)
+	ap := app.NewApp(store, conf, deleteSvc)
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", bytes.NewReader([]byte("invalid json")))
 	req = req.WithContext(middleware.SetUserID(req.Context(), "user123"))

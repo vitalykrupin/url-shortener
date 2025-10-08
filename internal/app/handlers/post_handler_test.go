@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/internal/app"
-	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
@@ -32,8 +31,7 @@ func TestPostHandler_ServeHTTP_TextPlain(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 
-	authSvc := authservice.NewAuthService(store)
-	newApp := app.NewApp(store, conf, nil, authSvc)
+	newApp := app.NewApp(store, conf, nil)
 
 	// Test case 1: Valid text/plain request
 	t.Run("valid text/plain request", func(t *testing.T) {
@@ -87,8 +85,7 @@ func TestPostHandler_ServeHTTP_ApplicationJSON(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 
-	authSvc := authservice.NewAuthService(store)
-	newApp := app.NewApp(store, conf, nil, authSvc)
+	newApp := app.NewApp(store, conf, nil)
 
 	// Test case 1: Valid application/json request
 	t.Run("valid application/json request", func(t *testing.T) {
@@ -160,8 +157,7 @@ func TestPostHandler_ServeHTTP_WrongMethod(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 
-	authSvc := authservice.NewAuthService(store)
-	newApp := app.NewApp(store, conf, nil, authSvc)
+	newApp := app.NewApp(store, conf, nil)
 
 	// Test case: GET request instead of POST
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader("https://example.com"))
@@ -190,8 +186,7 @@ func TestPostHandler_ServeHTTP_ExistingURL(t *testing.T) {
 		_ = store.CloseStorage(context.Background())
 	}()
 
-	authSvc := authservice.NewAuthService(store)
-	newApp := app.NewApp(store, conf, nil, authSvc)
+	newApp := app.NewApp(store, conf, nil)
 
 	// First request to add URL
 	req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))

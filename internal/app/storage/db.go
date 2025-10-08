@@ -48,18 +48,7 @@ func NewDB(DBDSN string) (*DB, error) {
 		return nil, err
 	}
 
-	// Create users table if it doesn't exist
-	_, err = conn.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS users (
-			id SERIAL PRIMARY KEY,
-			login VARCHAR(255) NOT NULL UNIQUE,
-			password VARCHAR(255) NOT NULL,
-			user_id VARCHAR(255) NOT NULL UNIQUE
-		);`)
-	if err != nil {
-		log.Println("Can not create users table")
-		return nil, err
-	}
+	// Note: user-related tables are managed by external auth-service
 
 	return &DB{conn}, nil
 }

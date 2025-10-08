@@ -76,7 +76,10 @@ go run cmd/shortener/main.go -d "postgres://user:password@localhost:5432/dbname?
 
 ### Запуск сервиса авторизации
 
+Сервис авторизации теперь находится в отдельном репозитории `../auth-service`:
+
 ```
+cd ../auth-service
 go run cmd/auth/main.go
 ```
 
@@ -148,7 +151,8 @@ docker-compose up
 Также можно запустить сервис авторизации отдельно:
 
 ```
-docker build -t auth-service -f Dockerfile.auth .
+cd ../auth-service
+docker build -t auth-service .
 docker run -p 8082:8082 auth-service
 ```
 
