@@ -1,7 +1,7 @@
 # Dockerfile для сервиса авторизации
 
 # Используем официальный образ Go как базовый
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25.2-alpine AS builder
 
 # Установка переменных окружения
 ENV CGO_ENABLED=0

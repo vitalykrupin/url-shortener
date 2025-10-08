@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vitalykrupin/url-shortener/cmd/shortener/config"
 	"github.com/vitalykrupin/url-shortener/internal/app"
+	"github.com/vitalykrupin/url-shortener/internal/app/authservice"
 	"github.com/vitalykrupin/url-shortener/internal/app/storage"
 )
 
@@ -24,14 +25,15 @@ func TestPostHandler_ServeHTTP_TextPlain(t *testing.T) {
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = filepath.Join(t.TempDir(), "testfile.json")
-	
+
 	store, err := storage.NewStorage(conf)
 	require.NoError(t, err)
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	
-	newApp := app.NewApp(store, conf, nil)
+
+	authSvc := authservice.NewAuthService(store)
+	newApp := app.NewApp(store, conf, nil, authSvc)
 
 	// Test case 1: Valid text/plain request
 	t.Run("valid text/plain request", func(t *testing.T) {
@@ -47,7 +49,7 @@ func TestPostHandler_ServeHTTP_TextPlain(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, res.StatusCode)
 		assert.Equal(t, "text/plain", res.Header.Get("Content-Type"))
-		
+
 		// Check that response body is not empty and contains expected format
 		body := new(bytes.Buffer)
 		_, err := body.ReadFrom(res.Body)
@@ -78,14 +80,15 @@ func TestPostHandler_ServeHTTP_ApplicationJSON(t *testing.T) {
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = filepath.Join(t.TempDir(), "testfile.json")
-	
+
 	store, err := storage.NewStorage(conf)
 	require.NoError(t, err)
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	
-	newApp := app.NewApp(store, conf, nil)
+
+	authSvc := authservice.NewAuthService(store)
+	newApp := app.NewApp(store, conf, nil, authSvc)
 
 	// Test case 1: Valid application/json request
 	t.Run("valid application/json request", func(t *testing.T) {
@@ -102,7 +105,7 @@ func TestPostHandler_ServeHTTP_ApplicationJSON(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, res.StatusCode)
 		assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
-		
+
 		// Check response structure
 		var resp postJSONResponse
 		err := json.NewDecoder(res.Body).Decode(&resp)
@@ -150,14 +153,15 @@ func TestPostHandler_ServeHTTP_WrongMethod(t *testing.T) {
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = filepath.Join(t.TempDir(), "testfile.json")
-	
+
 	store, err := storage.NewStorage(conf)
 	require.NoError(t, err)
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	
-	newApp := app.NewApp(store, conf, nil)
+
+	authSvc := authservice.NewAuthService(store)
+	newApp := app.NewApp(store, conf, nil, authSvc)
 
 	// Test case: GET request instead of POST
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader("https://example.com"))
@@ -179,14 +183,15 @@ func TestPostHandler_ServeHTTP_ExistingURL(t *testing.T) {
 	conf.ServerAddress = "localhost:8080"
 	conf.ResponseAddress = "http://localhost:8080"
 	conf.FileStorePath = filepath.Join(t.TempDir(), "testfile.json")
-	
+
 	store, err := storage.NewStorage(conf)
 	require.NoError(t, err)
 	defer func() {
 		_ = store.CloseStorage(context.Background())
 	}()
-	
-	newApp := app.NewApp(store, conf, nil)
+
+	authSvc := authservice.NewAuthService(store)
+	newApp := app.NewApp(store, conf, nil, authSvc)
 
 	// First request to add URL
 	req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -284,7 +289,7 @@ func TestPrintResponse_TextPlain(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, res.StatusCode)
 		assert.Equal(t, "text/plain", res.Header.Get("Content-Type"))
-		
+
 		body := new(bytes.Buffer)
 		_, err = body.ReadFrom(res.Body)
 		require.NoError(t, err)
@@ -305,7 +310,7 @@ func TestPrintResponse_TextPlain(t *testing.T) {
 
 		assert.Equal(t, http.StatusConflict, res.StatusCode)
 		assert.Equal(t, "text/plain", res.Header.Get("Content-Type"))
-		
+
 		body := new(bytes.Buffer)
 		_, err = body.ReadFrom(res.Body)
 		require.NoError(t, err)
@@ -328,7 +333,7 @@ func TestPrintResponse_ApplicationJSON(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, res.StatusCode)
 		assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
-		
+
 		var resp postJSONResponse
 		err = json.NewDecoder(res.Body).Decode(&resp)
 		require.NoError(t, err)
@@ -349,7 +354,7 @@ func TestPrintResponse_ApplicationJSON(t *testing.T) {
 
 		assert.Equal(t, http.StatusConflict, res.StatusCode)
 		assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
-		
+
 		var resp postJSONResponse
 		err = json.NewDecoder(res.Body).Decode(&resp)
 		require.NoError(t, err)

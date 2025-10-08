@@ -14,6 +14,17 @@ func main() {
 	endpoint := "http://localhost:8080/"
 	reader := bufio.NewReader(os.Stdin)
 
+	// Ask user if they want to register or login
+	fmt.Println("Выберите действие:")
+	fmt.Println("1. Войти в систему")
+	fmt.Println("2. Зарегистрироваться")
+	fmt.Print("Введите номер (1 или 2): ")
+	choice, err := reader.ReadString('\n')
+	if err != nil {
+		panic(err)
+	}
+	choice = strings.TrimSpace(choice)
+
 	// Prompt for login credentials
 	fmt.Println("Введите логин")
 	login, err := reader.ReadString('\n')
@@ -29,10 +40,31 @@ func main() {
 	}
 	password = strings.TrimSpace(password)
 
-	// Obtain token using credentials and persist it
+	// Handle registration or login
 	if login != "" && password != "" {
-		if token, err := obtainTokenFromCreds(login, password); err == nil && token != "" {
+		var token string
+		var err error
+
+		if choice == "2" {
+			// Register new user
+			fmt.Println("Регистрация нового пользователя...")
+			token, err = registerUser(login, password)
+			if err != nil {
+				fmt.Printf("Ошибка регистрации: %v\n", err)
+				fmt.Println("Попытка входа в систему...")
+				token, err = obtainTokenFromCreds(login, password)
+			}
+		} else {
+			// Login existing user
+			fmt.Println("Вход в систему...")
+			token, err = obtainTokenFromCreds(login, password)
+		}
+
+		if err == nil && token != "" {
 			_ = os.WriteFile("jwt_token.txt", []byte(token), 0600)
+			fmt.Println("Успешная авторизация!")
+		} else {
+			fmt.Printf("Ошибка авторизации: %v\n", err)
 		}
 	}
 
@@ -182,6 +214,54 @@ func obtainTokenFromCreds(login, password string) (string, error) {
 		b, _ := io.ReadAll(resp.Body)
 		return "", fmt.Errorf("login failed: %s", strings.TrimSpace(string(b)))
 	}
+	var respJSON struct {
+		UserID string `json:"user_id"`
+		Token  string `json:"token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&respJSON); err != nil {
+		return "", err
+	}
+	if strings.TrimSpace(respJSON.Token) == "" {
+		return "", fmt.Errorf("empty token in response")
+	}
+	return respJSON.Token, nil
+}
+
+// registerUser registers a new user with the auth service
+func registerUser(login, password string) (string, error) {
+	type creds struct {
+		Login    string `json:"login"`
+		Password string `json:"password"`
+	}
+	c := creds{Login: strings.TrimSpace(login), Password: strings.TrimSpace(password)}
+	if c.Login == "" || c.Password == "" {
+		return "", fmt.Errorf("empty credentials")
+	}
+
+	// Determine auth server URL
+	authURL := os.Getenv("AUTH_SERVER_URL")
+	if strings.TrimSpace(authURL) == "" {
+		authURL = "http://localhost:8082"
+	}
+
+	// Perform registration
+	bodyBytes, _ := json.Marshal(c)
+	req, err := http.NewRequest(http.MethodPost, authURL+"/api/auth/register", strings.NewReader(string(bodyBytes)))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		b, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("registration failed: %s", strings.TrimSpace(string(b)))
+	}
+
 	var respJSON struct {
 		UserID string `json:"user_id"`
 		Token  string `json:"token"`

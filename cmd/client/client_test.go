@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -238,5 +239,119 @@ func TestSendRequest_Headers(t *testing.T) {
 	// Check response status
 	if response.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", response.StatusCode)
+	}
+}
+
+func TestRegisterUser(t *testing.T) {
+	// Create a test server for registration
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected POST method, got %s", r.Method)
+		}
+
+		// Check content type
+		contentType := r.Header.Get("Content-Type")
+		if contentType != "application/json" {
+			t.Errorf("Expected Content-Type 'application/json', got '%s'", contentType)
+		}
+
+		// Check URL
+		if r.URL.Path != "/api/auth/register" {
+			t.Errorf("Expected path '/api/auth/register', got '%s'", r.URL.Path)
+		}
+
+		// Read and check body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("Error reading request body: %v", err)
+		}
+
+		// Parse JSON body
+		var creds struct {
+			Login    string `json:"login"`
+			Password string `json:"password"`
+		}
+		if err := json.Unmarshal(body, &creds); err != nil {
+			t.Fatalf("Error parsing JSON: %v", err)
+		}
+
+		if creds.Login != "testuser" || creds.Password != "testpass" {
+			t.Errorf("Expected login 'testuser' and password 'testpass', got '%s' and '%s'", creds.Login, creds.Password)
+		}
+
+		// Send response
+		w.WriteHeader(http.StatusCreated)
+		response := map[string]string{
+			"user_id": "12345",
+			"token":   "test-token-123",
+		}
+		json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	// Set environment variable to use test server
+	os.Setenv("AUTH_SERVER_URL", server.URL)
+	defer os.Unsetenv("AUTH_SERVER_URL")
+
+	// Test registerUser function
+	token, err := registerUser("testuser", "testpass")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Check token
+	expectedToken := "test-token-123"
+	if token != expectedToken {
+		t.Errorf("Expected token '%s', got '%s'", expectedToken, token)
+	}
+}
+
+func TestRegisterUser_ServerError(t *testing.T) {
+	// Create a test server that returns an error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("User already exists"))
+	}))
+	defer server.Close()
+
+	// Set environment variable to use test server
+	os.Setenv("AUTH_SERVER_URL", server.URL)
+	defer os.Unsetenv("AUTH_SERVER_URL")
+
+	// Test registerUser function
+	_, err := registerUser("testuser", "testpass")
+	if err == nil {
+		t.Error("Expected error for server error response")
+	}
+
+	// Check error message
+	expectedError := "registration failed: User already exists"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
+	}
+}
+
+func TestRegisterUser_EmptyCredentials(t *testing.T) {
+	// Test with empty credentials
+	_, err := registerUser("", "password")
+	if err == nil {
+		t.Error("Expected error for empty login")
+	}
+
+	_, err = registerUser("login", "")
+	if err == nil {
+		t.Error("Expected error for empty password")
+	}
+}
+
+func TestRegisterUser_InvalidEndpoint(t *testing.T) {
+	// Test with invalid endpoint
+	os.Setenv("AUTH_SERVER_URL", "http://invalid-endpoint:99999")
+	defer os.Unsetenv("AUTH_SERVER_URL")
+
+	_, err := registerUser("testuser", "testpass")
+	if err == nil {
+		t.Error("Expected error for invalid endpoint")
 	}
 }
